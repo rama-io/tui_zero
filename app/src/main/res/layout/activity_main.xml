@@ -12,8 +12,7 @@
     android:paddingBottom="8dp">
 
     <LinearLayout
-        style="@style/HorizontalList"
-        android:layout_marginBottom="8dp">
+        style="@style/HorizontalList">
 
         <LinearLayout
             style="@style/HorizontalList"
@@ -73,10 +72,11 @@
         </FrameLayout>
     </LinearLayout>
 
+    <View style="@style/SeparatorListVertical" />
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginBottom="8dp"
         android:layout_weight="1">
 
         <ListView
@@ -101,11 +101,12 @@
             android:visibility="gone" />
     </FrameLayout>
 
+    <View style="@style/SeparatorListVertical" />
+
     <FrameLayout
         android:id="@+id/currently_playing_display"
         android:layout_width="match_parent"
         android:layout_height="30sp"
-        android:layout_marginBottom="8dp"
         android:background="@color/crust">
 
         <View
@@ -128,6 +129,8 @@
             android:text="@string/placeholder_now_playing"
             android:textColor="@color/accent" />
     </FrameLayout>
+
+    <View style="@style/SeparatorListVertical" />
 
     <LinearLayout
         style="@style/HorizontalList"
@@ -211,6 +214,35 @@
                 android:contentDescription="@string/altdescr_shuffle"
                 android:src="@drawable/px_shuffle"
                 android:tint="@color/text" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <View style="@style/SeparatorListVertical" />
+
+    <LinearLayout
+        style="@style/HorizontalList">
+        <FrameLayout
+            style="@style/BTN"
+            android:layout_weight="1">
+
+            <ImageView
+                style="@style/Icon24"
+                android:tint="@color/base"
+                android:layout_gravity="center"
+                android:src="@drawable/px_playlist" />
+        </FrameLayout>
+
+        <View style="@style/SeparatorListHorizontalSmall" />
+
+        <FrameLayout
+            style="@style/BTN"
+            android:layout_weight="1">
+
+            <ImageView
+                style="@style/Icon24"
+                android:tint="@color/base"
+                android:layout_gravity="center"
+                android:src="@drawable/px_playlist" />
         </FrameLayout>
     </LinearLayout>
 
