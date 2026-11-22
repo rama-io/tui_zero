@@ -1,0 +1,218 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
+    style="@style/VerticalList"
+    android:layout_height="match_parent"
+    android:background="@color/base"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
+    android:paddingLeft="16dp"
+    android:paddingTop="8dp"
+    android:paddingRight="16dp"
+    android:paddingBottom="8dp">
+
+    <LinearLayout
+        style="@style/HorizontalList"
+        android:layout_marginBottom="8dp">
+
+        <LinearLayout
+            style="@style/HorizontalList"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:background="@color/mantle">
+
+            <FrameLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="12sp">
+
+                <ImageView
+                    style="@style/Icon24"
+                    android:importantForAccessibility="no"
+                    android:src="@drawable/px_search" />
+            </FrameLayout>
+
+            <EditText
+                android:id="@+id/filter_input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:imeOptions="actionSearch"
+                android:inputType="text"
+                android:maxLines="1"
+                android:padding="16sp"
+                android:singleLine="true"
+                android:textColor="@color/text"
+                android:textSize="16sp" />
+
+            <FrameLayout
+                android:id="@+id/clear_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="12sp"
+                android:visibility="gone">
+
+                <ImageView
+                    style="@style/Icon24"
+                    android:contentDescription="@string/altdescr_clear_search"
+                    android:src="@drawable/px_times" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/open_settings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12sp">
+
+            <ImageView
+                style="@style/Icon24"
+                android:contentDescription="@string/altdescr_open_settings"
+                android:src="@drawable/px_cog" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/track_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:cacheColorHint="@android:color/transparent"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="8dp"
+            android:drawSelectorOnTop="true"
+            android:fadingEdge="none"
+            android:overScrollMode="never"
+            android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/loading_text"
+            style="@style/H3"
+            android:layout_width="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/placeholder_loading_tracks"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- Now playing + progress (tap to seek) -->
+    <FrameLayout
+        android:id="@+id/currently_playing_display"
+        android:layout_width="match_parent"
+        android:layout_height="30sp"
+        android:layout_marginBottom="8dp"
+        android:background="@color/crust">
+
+        <View
+            android:id="@+id/progress_bg"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:background="@color/accent_2" />
+
+        <TextView
+            android:id="@+id/currently_playing_text"
+            style="@style/Text"
+            android:layout_width="match_parent"
+            android:layout_gravity="center"
+            android:ellipsize="end"
+            android:gravity="center"
+            android:maxLines="1"
+            android:paddingLeft="16sp"
+            android:paddingRight="16sp"
+            android:singleLine="true"
+            android:text="@string/placeholder_now_playing"
+            android:textColor="@color/accent" />
+    </FrameLayout>
+
+    <LinearLayout
+        style="@style/HorizontalList"
+        android:background="@color/mantle"
+        android:baselineAligned="false"
+        android:gravity="center"
+        android:padding="8dp">
+
+        <FrameLayout
+            android:id="@+id/repeat_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/repeat_icon"
+                android:layout_width="28sp"
+                android:layout_height="28sp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/altdescr_repeat"
+                android:src="@drawable/px_repeat"
+                android:tint="@color/text" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/prev_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:layout_width="36sp"
+                android:layout_height="36sp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/altdescr_previous"
+                android:src="@drawable/px_prev"
+                android:tint="@color/text" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/play_pause_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:id="@+id/play_pause_icon"
+                android:layout_width="42sp"
+                android:layout_height="42sp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/altdescr_play_pause"
+                android:src="@drawable/px_play_circle"
+                android:tint="@color/text" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/next_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:layout_width="36sp"
+                android:layout_height="36sp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/altdescr_next"
+                android:src="@drawable/px_next"
+                android:tint="@color/text" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:id="@+id/shuffle_button"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <ImageView
+                android:layout_width="28sp"
+                android:layout_height="28sp"
+                android:layout_gravity="center"
+                android:contentDescription="@string/altdescr_shuffle"
+                android:src="@drawable/px_shuffle"
+                android:tint="@color/text" />
+        </FrameLayout>
+    </LinearLayout>
+
+</LinearLayout>

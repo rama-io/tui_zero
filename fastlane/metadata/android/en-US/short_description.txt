@@ -1,0 +1,1 @@
+Minimal, privacy-first local music player. Java, zero dependencies.

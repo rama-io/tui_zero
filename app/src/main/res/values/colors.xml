@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="text">#CDD6F4</color>
+    <color name="base">#1E1E2E</color>
+    <color name="crust">#11111B</color>
+    <color name="mantle">#181825</color>
+
+    <!-- Surfaces -->
+    <color name="surface_0">#45475A</color>
+    <color name="surface_1">#585B71</color>
+
+    <!-- UI -->
+    <color name="disabled">#6C7086</color>
+    <color name="border">#6C7088</color>
+
+    <!-- Accent -->
+    <color name="accent">#CBA6F7</color>
+    <color name="accent_2">#390a70</color>
+
+    <!-- Semantic -->
+    <color name="success">#A6E3A2</color>
+    <color name="warning">#F9E2AE</color>
+    <color name="error">#F38BA9</color>
+</resources>
