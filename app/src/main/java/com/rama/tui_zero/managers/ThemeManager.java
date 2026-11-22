@@ -28,7 +28,6 @@ import java.util.Random;
 public final class ThemeManager {
     private static final Random RANDOM = new Random();
 
-    // The remap table only depends on the target palette, and list rows ask for it on every bind.
     private static Themes.Palette cachedFor;
     private static Map<Integer, Integer> cachedMap;
 
@@ -117,7 +116,7 @@ public final class ThemeManager {
     }
 
     private static Drawable buildSelector(Themes.Palette palette) {
-        int highlight = withAlpha(palette.accent, 110);
+        int highlight = withAlpha(palette.accent_2, 110);
         StateListDrawable selector = new StateListDrawable();
         selector.addState(new int[]{android.R.attr.state_pressed}, new ColorDrawable(highlight));
         selector.addState(new int[]{android.R.attr.state_focused}, new ColorDrawable(highlight));
@@ -145,12 +144,14 @@ public final class ThemeManager {
             Themes.Palette p = all.get(i);
             map.put(p.text, target.text);
             map.put(p.base, target.base);
+            map.put(p.mantle, target.mantle);
             map.put(p.crust, target.crust);
             map.put(p.surface_0, target.surface_0);
             map.put(p.surface_1, target.surface_1);
             map.put(p.disabled, target.disabled);
             map.put(p.border, target.border);
             map.put(p.accent, target.accent);
+            map.put(p.accent_2, target.accent_2);
             map.put(p.success, target.success);
             map.put(p.warning, target.warning);
             map.put(p.error, target.error);
@@ -158,12 +159,14 @@ public final class ThemeManager {
         android.content.res.Resources res = context.getResources();
         map.put(res.getColor(R.color.text), target.text);
         map.put(res.getColor(R.color.base), target.base);
+        map.put(res.getColor(R.color.mantle), target.mantle);
         map.put(res.getColor(R.color.crust), target.crust);
         map.put(res.getColor(R.color.surface_0), target.surface_0);
         map.put(res.getColor(R.color.surface_1), target.surface_1);
         map.put(res.getColor(R.color.disabled), target.disabled);
         map.put(res.getColor(R.color.border), target.border);
         map.put(res.getColor(R.color.accent), target.accent);
+        map.put(res.getColor(R.color.accent_2), target.accent_2);
         map.put(res.getColor(R.color.success), target.success);
         map.put(res.getColor(R.color.warning), target.warning);
         map.put(res.getColor(R.color.error), target.error);

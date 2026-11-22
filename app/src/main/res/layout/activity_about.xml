@@ -54,13 +54,6 @@
             <com.rama.tui_zero.widgets.WdLabel
                 style="@style/BlockFlow"
                 app:icon="@drawable/px_check"
-                app:text="@string/app_claims_dependencies_desc" />
-
-            <View style="@style/SeparatorListHorizontal" />
-
-            <com.rama.tui_zero.widgets.WdLabel
-                style="@style/BlockFlow"
-                app:icon="@drawable/px_check"
                 app:text="@string/app_claims_ads_desc" />
 
             <View style="@style/SeparatorListHorizontal" />

@@ -19,7 +19,7 @@
             style="@style/HorizontalList"
             android:layout_width="0dp"
             android:layout_weight="1"
-            android:background="@color/mantle">
+            android:background="@color/crust">
 
             <FrameLayout
                 android:layout_width="wrap_content"
@@ -101,7 +101,6 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- Now playing + progress (tap to seek) -->
     <FrameLayout
         android:id="@+id/currently_playing_display"
         android:layout_width="match_parent"
@@ -132,7 +131,7 @@
 
     <LinearLayout
         style="@style/HorizontalList"
-        android:background="@color/mantle"
+        android:background="@color/crust"
         android:baselineAligned="false"
         android:gravity="center"
         android:padding="8dp">

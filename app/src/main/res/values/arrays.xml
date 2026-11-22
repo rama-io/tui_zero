@@ -7,16 +7,16 @@
         <item>flac</item>
         <item>ogg</item>
         <item>wav</item>
-        <item>aiff</item>
         <item>wma</item>
-        <item>alac</item>
-        <item>ape</item>
-        <item>wv</item>
-        <item>tta</item>
-        <item>dsf</item>
-        <item>dff</item>
         <item>opus</item>
-        <item>amr</item>
         <item>mka</item>
+<!--        <item>aiff</item>-->
+<!--        <item>alac</item>-->
+<!--        <item>ape</item>-->
+<!--        <item>wv</item>-->
+<!--        <item>tta</item>-->
+<!--        <item>dsf</item>-->
+<!--        <item>dff</item>-->
+<!--        <item>amr</item>-->
     </string-array>
 </resources>

@@ -80,12 +80,12 @@ public final class Themes {
         }
     }
 
-    public static final Palette CATPPUCCIN_MOCHA_MAUVE = mocha(PrefTheme.CATPPUCCIN_MOCHA_MAUVE, "Catppuccin Mocha Mauve", 0xFFCBA6F7, 0XFF390a70);
-    public static final Palette CATPPUCCIN_MOCHA_BLUE = mocha(PrefTheme.CATPPUCCIN_MOCHA_BLUE, "Catppuccin Mocha Blue", 0xFF89B4FA, 0XFF053075);
-    public static final Palette CATPPUCCIN_MOCHA_YELLOW = mocha(PrefTheme.CATPPUCCIN_MOCHA_YELLOW, "Catppuccin Mocha Yellow", 0xFFF9E2AF, 0xFF715109);
-    public static final Palette CATPPUCCIN_MOCHA_PEACH = mocha(PrefTheme.CATPPUCCIN_MOCHA_PEACH, "Catppuccin Mocha Peach", 0xFFFAB387, 0xFF753005);
-    public static final Palette CATPPUCCIN_MOCHA_GREEN = mocha(PrefTheme.CATPPUCCIN_MOCHA_GREEN, "Catppuccin Mocha Green", 0xFFA6E3A1, 0xFF215e1c);
-    public static final Palette CATPPUCCIN_MOCHA_RED = mocha(PrefTheme.CATPPUCCIN_MOCHA_RED, "Catppuccin Mocha Red", 0xFFF38BA8, 0xFF6f0b27);
+    public static final Palette CATPPUCCIN_MOCHA_MAUVE = mocha(PrefTheme.CATPPUCCIN_MOCHA_MAUVE, "Catppuccin Mocha Mauve", 0xFFCBA6F7, 0XFF290453);
+    public static final Palette CATPPUCCIN_MOCHA_BLUE = mocha(PrefTheme.CATPPUCCIN_MOCHA_BLUE, "Catppuccin Mocha Blue", 0xFF89B4FA, 0XFF042458);
+    public static final Palette CATPPUCCIN_MOCHA_YELLOW = mocha(PrefTheme.CATPPUCCIN_MOCHA_YELLOW, "Catppuccin Mocha Yellow", 0xFFF9E2AF, 0xFF513906);
+    public static final Palette CATPPUCCIN_MOCHA_PEACH = mocha(PrefTheme.CATPPUCCIN_MOCHA_PEACH, "Catppuccin Mocha Peach", 0xFFFAB387, 0xFF542203);
+    public static final Palette CATPPUCCIN_MOCHA_GREEN = mocha(PrefTheme.CATPPUCCIN_MOCHA_GREEN, "Catppuccin Mocha Green", 0xFFA6E3A1, 0xFF174314);
+    public static final Palette CATPPUCCIN_MOCHA_RED = mocha(PrefTheme.CATPPUCCIN_MOCHA_RED, "Catppuccin Mocha Red", 0xFFF38BA8, 0xFF4f081c);
     public static final Palette CATPPUCCIN_LATTE = new Palette(PrefTheme.CATPPUCCIN_LATTE, "Catppuccin Latte", 0xFF4C4F69, 0xFFEFF1F5, 0xFFe6e9ef, 0xFFDCE0E8, 0xFFCCD0DA, 0xFFBCC0CC, 0xFF9CA0B1, 0xFF9CA0B2, 0xFF1E66F5, 0xFF052972, 0xFF40A02B, 0xFFFE640B, 0xFFD20F39);
 
     public static List<Palette> all() {
