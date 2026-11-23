@@ -115,4 +115,12 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">@dimen/space_between_elements</item>
     </style>
+
+    <style name="NavBtn">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:background">@color/surface_0</item>
+        <item name="android:padding">16dp</item>
+    </style>
 </resources>

@@ -221,28 +221,42 @@
 
     <LinearLayout
         style="@style/HorizontalList">
+
         <FrameLayout
-            style="@style/BTN"
-            android:layout_weight="1">
+            android:id="@+id/nav_playlist"
+            style="@style/NavBtn">
 
             <ImageView
+                android:id="@+id/nav_playlist_icon"
                 style="@style/Icon24"
-                android:tint="@color/base"
-                android:layout_gravity="center"
+                android:contentDescription="Playlist"
                 android:src="@drawable/px_playlist" />
         </FrameLayout>
 
         <View style="@style/SeparatorListHorizontalSmall" />
 
         <FrameLayout
-            style="@style/BTN"
-            android:layout_weight="1">
+            android:id="@+id/nav_visualizer"
+            style="@style/NavBtn">
 
             <ImageView
+                android:id="@+id/nav_visualizer_icon"
                 style="@style/Icon24"
-                android:tint="@color/base"
-                android:layout_gravity="center"
-                android:src="@drawable/px_playlist" />
+                android:contentDescription="Visualizer"
+                android:src="@drawable/px_eye" />
+        </FrameLayout>
+
+        <View style="@style/SeparatorListHorizontalSmall" />
+
+        <FrameLayout
+            android:id="@+id/nav_settings"
+            style="@style/NavBtn">
+
+            <ImageView
+                android:id="@+id/nav_settings_icon"
+                style="@style/Icon24"
+                android:contentDescription="@string/header_settings"
+                android:src="@drawable/px_cog" />
         </FrameLayout>
     </LinearLayout>
 
