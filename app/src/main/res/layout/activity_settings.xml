@@ -143,11 +143,28 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:defaultExpanded="true"
-                app:header="@string/header_themes"
+                app:header="@string/header_theme"
                 app:key="settings:section:themes">
 
                 <com.rama.tui_zero.widgets.WdRadioGroup
                     android:id="@+id/theme_group"
+                    style="@style/VerticalList_BG2" />
+            </com.rama.tui_zero.widgets.WdCollapsibleSection>
+
+            <View
+                android:id="@+id/accent_separator"
+                style="@style/SeparatorListVertical" />
+
+            <com.rama.tui_zero.widgets.WdCollapsibleSection
+                android:id="@+id/accent_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:defaultExpanded="true"
+                app:header="@string/header_accent"
+                app:key="settings:section:accent">
+
+                <com.rama.tui_zero.widgets.WdRadioGroup
+                    android:id="@+id/accent_group"
                     style="@style/VerticalList_BG2" />
             </com.rama.tui_zero.widgets.WdCollapsibleSection>
 
@@ -200,129 +217,47 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:defaultExpanded="true"
-                app:header="Visualizer"
+                app:header="@string/header_visualizer"
                 app:key="settings:section:visualizer">
 
-                <FrameLayout
+                <com.rama.tui_zero.widgets.WdPlot
+                    android:id="@+id/canvas_graph"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
+                    android:layout_height="300dp" />
+
+                <View style="@style/SeparatorListVertical" />
+
+                <TextView
+                    android:id="@+id/visualizer_status"
+                    style="@style/Text_Center"
                     android:background="@color/crust"
-                    android:id="@+id/canvas_graph"/>
+                    android:padding="8sp" />
+
+                <View style="@style/SeparatorListVertical" />
+
+                <LinearLayout
+                    android:id="@+id/counters_container"
+                    style="@style/VerticalListDivided" />
 
                 <View style="@style/SeparatorListVertical" />
 
                 <Button
                     android:id="@+id/add_counter"
                     style="@style/BTN"
-                    android:text="ADD COUNTER" />
+                    android:text="@string/btn_add_counter" />
+
+                <View style="@style/SeparatorListVertical" />
+
+                <LinearLayout
+                    android:id="@+id/formulas_container"
+                    style="@style/VerticalListDivided" />
 
                 <View style="@style/SeparatorListVertical" />
 
                 <Button
                     android:id="@+id/add_formula"
                     style="@style/BTN"
-                    android:text="ADD FORMULA" />
-
-                <View style="@style/SeparatorListVertical" />
-
-                <LinearLayout
-                    android:id="@+id/counter_field"
-                    style="@style/VerticalList_BG2">
-
-                    <TextView
-                        android:id="@+id/counter_name"
-                        style="@style/Text"
-                        android:text="COUNTER_1"
-                        android:textColor="@color/accent" />
-
-                    <View style="@style/Separator" />
-
-                    <TextView
-                        style="@style/Text"
-                        android:text="Alias" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <EditText
-                        android:id="@+id/counter_alias"
-                        style="@style/EditText" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <TextView
-                        style="@style/Text"
-                        android:text="From" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <EditText
-                        android:id="@+id/counter_from"
-                        style="@style/EditText" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <TextView
-                        style="@style/Text"
-                        android:text="To" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <EditText
-                        android:id="@+id/counter_to"
-                        style="@style/EditText" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <TextView
-                        style="@style/Text"
-                        android:text="Delay (ms)" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <EditText
-                        android:id="@+id/counter_delay"
-                        style="@style/EditText" />
-
-                </LinearLayout>
-
-                <View style="@style/SeparatorListVertical" />
-
-                <LinearLayout
-                    android:id="@+id/formula_field"
-                    style="@style/VerticalList_BG2">
-
-                    <TextView
-                        android:id="@+id/formula_name"
-                        style="@style/Text"
-                        android:text="FORMULA_1"
-                        android:textColor="@color/accent" />
-
-                    <View style="@style/Separator" />
-
-                    <TextView
-                        style="@style/Text"
-                        android:text="X" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <EditText
-                        android:id="@+id/cx"
-                        style="@style/EditText" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <TextView
-                        style="@style/Text"
-                        android:text="Y" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <EditText
-                        android:id="@+id/cy"
-                        style="@style/EditText" />
-                </LinearLayout>
-
-
+                    android:text="@string/btn_add_formula" />
             </com.rama.tui_zero.widgets.WdCollapsibleSection>
         </LinearLayout>
     </ScrollView>
@@ -336,8 +271,7 @@
 
     <View style="@style/SeparatorListVertical" />
 
-    <Button
-        android:id="@+id/go_back"
-        style="@style/BTN"
-        android:text="@string/btn_go_back" />
+    <com.rama.tui_zero.widgets.WdNavbar
+        android:id="@+id/navbar"
+        style="@style/HorizontalList" />
 </LinearLayout>

@@ -9,21 +9,17 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.rama.tui_zero.MediaPlaybackService;
 import com.rama.tui_zero.R;
-import com.rama.tui_zero.adapters.TrackAdapter;
 import com.rama.tui_zero.helpers.Haptics;
 import com.rama.tui_zero.helpers.SystemBars;
 import com.rama.tui_zero.managers.FontManager;
@@ -31,7 +27,12 @@ import com.rama.tui_zero.managers.MusicManager;
 import com.rama.tui_zero.managers.PrefsManager;
 import com.rama.tui_zero.managers.ThemeManager;
 import com.rama.tui_zero.managers.ZoomManager;
+import com.rama.tui_zero.objects.Themes;
 import com.rama.tui_zero.objects.Track;
+import com.rama.tui_zero.pages.Page;
+import com.rama.tui_zero.pages.PlaylistPage;
+import com.rama.tui_zero.pages.VisualizerPage;
+import com.rama.tui_zero.widgets.WdNavbar;
 
 public class Main extends BaseActivity {
     private static final int REQ_MANAGE = 1;
@@ -39,18 +40,21 @@ public class Main extends BaseActivity {
     private static final int REQ_PERMS = 3;
     private static final long TICK_MS = 500;
 
+    private static final String KEY_PAGE = "current_page";
+
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private TrackAdapter adapter;
-    private ListView list;
-    private EditText filter;
-    private View clearButton;
+
+    private View root;
+    private WdNavbar navbar;
+    private final View[] pageViews = new View[2];
+    private final Page[] pages = new Page[2];
+    private PlaylistPage playlist;
+    private int currentPage = WdNavbar.PLAYLIST;
     private View progressBar;
     private View nowPlaying;
     private TextView nowPlayingText;
-    private TextView loadingText;
     private ImageView playPauseIcon;
     private ImageView repeatIcon;
-    private Track lastScrolledTo;
     private boolean askedForStorage;
 
     private final Runnable ticker = new Runnable() {
@@ -73,43 +77,32 @@ public class Main extends BaseActivity {
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, REQ_PERMS);
         }
 
-        View root = findViewById(R.id.root);
+        root = findViewById(R.id.root);
         SystemBars.applyInsets(root);
-        list = findViewById(R.id.track_list);
-        filter = findViewById(R.id.filter_input);
-        clearButton = findViewById(R.id.clear_button);
         progressBar = findViewById(R.id.progress_bg);
         nowPlaying = findViewById(R.id.currently_playing_display);
         nowPlayingText = findViewById(R.id.currently_playing_text);
-        loadingText = findViewById(R.id.loading_text);
         playPauseIcon = findViewById(R.id.play_pause_icon);
         repeatIcon = findViewById(R.id.repeat_icon);
 
         FontManager.apply(root, FontManager.getJersey25(this));
-        adapter = new TrackAdapter(this);
-        list.setAdapter(adapter);
-        list.setOnItemClickListener((parent, view, position, id) -> {
-            Haptics.tap(view);
-            MusicManager.setTracks(adapter.getDisplayed(), position);
-        });
 
-        filter.addTextChangedListener(new TextWatcher() {
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
+        pageViews[WdNavbar.PLAYLIST] = findViewById(R.id.page_playlist);
+        pageViews[WdNavbar.VISUALIZER] = findViewById(R.id.page_visualizer);
+        playlist = new PlaylistPage(this, pageViews[WdNavbar.PLAYLIST]);
+        pages[WdNavbar.PLAYLIST] = playlist;
+        pages[WdNavbar.VISUALIZER] = new VisualizerPage(this, pageViews[WdNavbar.VISUALIZER]);
 
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                clearButton.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
-                adapter.filter(s.toString());
-                if (s.length() == 0) MusicManager.restoreTracks(MusicManager.getAllTracks());
-            }
-
-            public void afterTextChanged(Editable s) {
+        navbar = findViewById(R.id.navbar);
+        navbar.setOnNavigateListener(page -> {
+            if (page == WdNavbar.SETTINGS) {
+                startActivityForResult(new Intent(Main.this, Settings.class), REQ_SETTINGS);
+                overridePendingTransition(0, 0);
+            } else if (page != currentPage) {
+                navigateTo(page);
             }
         });
-        clearButton.setOnClickListener(Haptics.onClick(v -> filter.setText("")));
 
-        findViewById(R.id.open_settings).setOnClickListener(Haptics.onClick(v ->
-                startActivityForResult(new Intent(Main.this, Settings.class), REQ_SETTINGS)));
         findViewById(R.id.prev_button).setOnClickListener(Haptics.onClick(v -> MusicManager.prev()));
         findViewById(R.id.next_button).setOnClickListener(Haptics.onClick(v -> MusicManager.next()));
         findViewById(R.id.play_pause_button).setOnClickListener(Haptics.onClick(v -> MusicManager.togglePlayPause()));
@@ -118,10 +111,7 @@ public class Main extends BaseActivity {
             refreshUi();
         }));
         findViewById(R.id.shuffle_button).setOnClickListener(Haptics.onClick(v -> {
-            MusicManager.restoreTracks(adapter.getDisplayed());
-            MusicManager.shuffleTracks(PrefsManager.getInstance(Main.this).isKeepTogether());
-            adapter.showTracks(MusicManager.getTracks());
-            lastScrolledTo = null;
+            playlist.shuffle();
             refreshUi();
         }));
         nowPlaying.setOnTouchListener((v, event) -> {
@@ -136,17 +126,17 @@ public class Main extends BaseActivity {
 
         MusicManager.setOnStateChanged(this::refreshUi);
         ThemeManager.rollIfRandom(this);
-        ThemeManager.applyTheme(this, root);
+        currentPage = savedInstanceState != null ? savedInstanceState.getInt(KEY_PAGE, WdNavbar.PLAYLIST) : WdNavbar.PLAYLIST;
+        navigateTo(currentPage);
         loadOrRequestTracks();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        View root = findViewById(R.id.root);
         ThemeManager.rollIfRandom(this);
-        ThemeManager.applyTheme(this, root);
-        adapter.notifyDataSetChanged();
+        refreshTheme();
+        pages[currentPage].onShow(); // e.g. the visualizer reloads what Settings changed
         refreshUi();
         handler.removeCallbacks(ticker);
         handler.post(ticker);
@@ -162,7 +152,16 @@ public class Main extends BaseActivity {
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putInt(KEY_PAGE, currentPage);
+    }
+
+    @Override
     protected void onDestroy() {
+        for (Page page : pages) {
+            if (page != null) page.destroy();
+        }
         MusicManager.setOnStateChanged(null);
         MusicManager.setOnPlaybackError(null);
         // The service is intentionally left running: playback must survive the activity.
@@ -171,9 +170,9 @@ public class Main extends BaseActivity {
 
     private void loadOrRequestTracks() {
         if (MusicManager.hasPermission(this)) {
-            loadingText.setVisibility(View.VISIBLE);
+            playlist.setLoading(true);
             MusicManager.loadTracks(this, success -> {
-                loadingText.setVisibility(View.GONE);
+                playlist.setLoading(false);
                 showLibrary();
             });
             return;
@@ -196,8 +195,7 @@ public class Main extends BaseActivity {
     }
 
     private void showLibrary() {
-        adapter.setLibrary(MusicManager.getAllTracks());
-        adapter.filter(filter.getText().toString());
+        playlist.showLibrary();
         refreshUi();
     }
 
@@ -207,8 +205,13 @@ public class Main extends BaseActivity {
         if (requestCode == REQ_MANAGE) {
             if (MusicManager.hasPermission(this)) loadOrRequestTracks();
         } else if (requestCode == REQ_SETTINGS) {
+            // Settings has the navbar too: tapping a page there brings us back to that page.
+            if (data != null && data.hasExtra(Settings.EXTRA_PAGE)) {
+                int page = data.getIntExtra(Settings.EXTRA_PAGE, currentPage);
+                if (page >= 0 && page < pages.length && page != currentPage) navigateTo(page);
+            }
             if (resultCode == RESULT_OK) {
-                filter.setText("");
+                playlist.clearFilter();
                 loadOrRequestTracks();
             }
         }
@@ -222,7 +225,7 @@ public class Main extends BaseActivity {
 
     private void refreshUi() {
         Track current = MusicManager.getCurrentTrack();
-        adapter.notifyDataSetChanged();
+        playlist.refresh(current);
         playPauseIcon.setImageResource(MusicManager.isPlaying() ? R.drawable.px_pause_circle : R.drawable.px_play_circle);
         repeatIcon.setAlpha(MusicManager.isRepeat() ? 1f : 0.4f);
         if (current == null) {
@@ -232,13 +235,33 @@ public class Main extends BaseActivity {
         } else {
             nowPlayingText.setText(current.displayArtists() + " - " + current.title);
         }
-        // Only follow the playing track when it changes, so scrolling the list by hand is not undone.
-        if (current != null && !current.equals(lastScrolledTo)) {
-            lastScrolledTo = current;
-            int pos = adapter.positionOf(current);
-            if (pos >= 0) list.smoothScrollToPosition(pos);
-        }
         updateProgress();
+    }
+
+    private void navigateTo(int page) {
+        Page leaving = pages[currentPage];
+        if (page != currentPage && leaving != null) {
+            leaving.onHide();
+            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+            if (imm != null) imm.hideSoftInputFromWindow(root.getWindowToken(), 0);
+        }
+        currentPage = page;
+        for (int i = 0; i < pageViews.length; i++) {
+            pageViews[i].setVisibility(i == page ? View.VISIBLE : View.GONE);
+        }
+        pages[page].onShow();
+        refreshTheme();
+    }
+
+    /** Re-applies zoom, theme and the navbar highlight, then lets the pages that draw by themselves follow. */
+    private void refreshTheme() {
+        ZoomManager.apply(this, root);
+        ThemeManager.applyTheme(this, root);
+        Themes.Palette palette = ThemeManager.currentPalette(this);
+        navbar.setActive(currentPage, palette);
+        for (Page page : pages) {
+            page.refreshTheme(palette);
+        }
     }
 
     private void updateProgress() {

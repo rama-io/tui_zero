@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import com.rama.tui_zero.R;
 import com.rama.tui_zero.objects.PrefTheme;
+import com.rama.tui_zero.objects.Themes;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -18,8 +19,12 @@ public final class PrefsManager {
 
     private static final String PREFS_NAME = "tui_zero";
 
-    private static final String KEY_THEME = "settings:theme";
+    private static final String KEY_THEME = "settings:theme"; // before the flavor / accent split, only read to migrate
     private static final String KEY_THEME_ROLLED_ID = "settings:theme_rolled_id";
+    private static final String KEY_FLAVOR = "settings:flavor";
+    private static final String KEY_ACCENT = "settings:accent";
+    private static final String KEY_ACCENT_ROLLED = "settings:accent_rolled";
+    private static final String KEY_VISUALIZER = "visualizer:setup";
     private static final String KEY_ZOOM_PERCENT = "settings:zoom_percent";
     private static final String KEY_SHOW_SYSTEM_BAR = "system:bar:visible";
     private static final String KEY_KEEP_SCREEN_AWAKE = "system:keep_screen_awake";
@@ -46,22 +51,71 @@ public final class PrefsManager {
         return instance;
     }
 
+    // Visualizer
+
+    /** Null until the visualizer setup was saved once. */
+    public String getVisualizerJson() {
+        return prefs.getString(KEY_VISUALIZER, null);
+    }
+
+    public void setVisualizerJson(String json) {
+        prefs.edit().putString(KEY_VISUALIZER, json).apply();
+    }
+
     // Appearance
 
-    public String getTheme() {
-        return prefs.getString(KEY_THEME, PrefTheme.DEFAULT);
+    /** One of the Themes flavor ids (mocha, macchiato, frappe, latte). */
+    public String getFlavor() {
+        migrateOldTheme();
+        String id = prefs.getString(KEY_FLAVOR, PrefTheme.DEFAULT_FLAVOR);
+        return Themes.isFlavor(id) ? id : PrefTheme.DEFAULT_FLAVOR;
     }
 
-    public void setTheme(String themeId) {
-        prefs.edit().putString(KEY_THEME, themeId).apply();
+    public void setFlavor(String flavorId) {
+        prefs.edit().putString(KEY_FLAVOR, flavorId).apply();
     }
 
-    public String getRolledThemeId() {
-        return prefs.getString(KEY_THEME_ROLLED_ID, PrefTheme.CATPPUCCIN_MOCHA_MAUVE);
+    /** A Themes accent id, or PrefTheme.ACCENT_RANDOM. */
+    public String getAccent() {
+        migrateOldTheme();
+        String id = prefs.getString(KEY_ACCENT, PrefTheme.DEFAULT_ACCENT);
+        return Themes.isAccent(id) || PrefTheme.ACCENT_RANDOM.equals(id) ? id : PrefTheme.DEFAULT_ACCENT;
     }
 
-    public void setRolledTheme(String themeId) {
-        prefs.edit().putString(KEY_THEME_ROLLED_ID, themeId).apply();
+    public void setAccent(String accentId) {
+        prefs.edit().putString(KEY_ACCENT, accentId).apply();
+    }
+
+    /** The accent last picked while the accent is "random". */
+    public String getRolledAccent() {
+        String id = prefs.getString(KEY_ACCENT_ROLLED, "mauve");
+        return Themes.isAccent(id) ? id : "mauve";
+    }
+
+    public void setRolledAccent(String accentId) {
+        prefs.edit().putString(KEY_ACCENT_ROLLED, accentId).apply();
+    }
+
+    /**
+     * Older builds stored one id such as "catppuccin_mocha_blue", "catppuccin_mocha_random" or "catppuccin_latte".
+     * Turns it into the flavor and accent it meant, once.
+     */
+    private void migrateOldTheme() {
+        if (!prefs.contains(KEY_THEME)) return;
+        String old = prefs.getString(KEY_THEME, "");
+        String flavor = PrefTheme.DEFAULT_FLAVOR;
+        String accent = PrefTheme.ACCENT_RANDOM;
+        if ("mono_dark".equals(old) || "mono_light".equals(old)) {
+            flavor = old;
+        } else if ("catppuccin_latte".equals(old)) {
+            flavor = "latte";
+            accent = "blue"; // the only accent the old latte had
+        } else if (old.startsWith("catppuccin_mocha_")) {
+            String tail = old.substring("catppuccin_mocha_".length());
+            if (Themes.isAccent(tail)) accent = tail;
+        }
+        prefs.edit().putString(KEY_FLAVOR, flavor).putString(KEY_ACCENT, accent)
+                .remove(KEY_THEME).remove(KEY_THEME_ROLLED_ID).apply();
     }
 
     public int getZoomPercent() {

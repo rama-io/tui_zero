@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/VerticalList_BG2">
+
+    <LinearLayout style="@style/HorizontalList">
+
+        <TextView
+            android:id="@+id/counter_name"
+            style="@style/Text"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:textColor="@color/accent" />
+
+        <FrameLayout
+            android:id="@+id/counter_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="4sp">
+
+            <ImageView
+                style="@style/Icon24"
+                android:contentDescription="@string/altdescr_delete"
+                android:src="@drawable/px_times" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <View style="@style/Separator" />
+
+    <TextView
+        style="@style/Text"
+        android:text="@string/label_counter_alias" />
+
+    <View style="@style/SeparatorListVertical" />
+
+    <EditText
+        android:id="@+id/counter_alias"
+        style="@style/EditText"
+        android:inputType="textNoSuggestions" />
+
+    <View style="@style/SeparatorListVertical" />
+
+    <TextView
+        style="@style/Text"
+        android:text="@string/label_counter_from" />
+
+    <View style="@style/SeparatorListVertical" />
+
+    <EditText
+        android:id="@+id/counter_from"
+        style="@style/EditText"
+        android:inputType="numberSigned|numberDecimal" />
+
+    <View style="@style/SeparatorListVertical" />
+
+    <TextView
+        style="@style/Text"
+        android:text="@string/label_counter_to" />
+
+    <View style="@style/SeparatorListVertical" />
+
+    <EditText
+        android:id="@+id/counter_to"
+        style="@style/EditText"
+        android:inputType="numberSigned|numberDecimal" />
+
+    <View style="@style/SeparatorListVertical" />
+
+    <TextView
+        style="@style/Text"
+        android:text="@string/label_counter_delay" />
+
+    <View style="@style/SeparatorListVertical" />
+
+    <EditText
+        android:id="@+id/counter_delay"
+        style="@style/EditText"
+        android:inputType="number" />
+
+</LinearLayout>

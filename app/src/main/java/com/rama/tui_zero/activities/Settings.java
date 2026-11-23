@@ -7,6 +7,9 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.PowerManager;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
@@ -21,10 +24,14 @@ import com.rama.tui_zero.managers.FontManager;
 import com.rama.tui_zero.managers.MusicManager;
 import com.rama.tui_zero.managers.PrefsManager;
 import com.rama.tui_zero.managers.ThemeManager;
+import com.rama.tui_zero.managers.VisualizerStore;
 import com.rama.tui_zero.managers.ZoomManager;
 import com.rama.tui_zero.objects.PrefTheme;
 import com.rama.tui_zero.objects.Themes;
+import com.rama.tui_zero.objects.Visualizer;
 import com.rama.tui_zero.widgets.WdCheckbox;
+import com.rama.tui_zero.widgets.WdNavbar;
+import com.rama.tui_zero.widgets.WdPlot;
 import com.rama.tui_zero.widgets.WdRadio;
 import com.rama.tui_zero.widgets.WdRadioGroup;
 
@@ -39,7 +46,17 @@ public class Settings extends BaseActivity {
 
     private PrefsManager prefs;
     private LinearLayout foldersContainer;
+    /** Result extra: the page (WdNavbar.PLAYLIST or VISUALIZER) the main activity should show when it comes back. */
+    public static final String EXTRA_PAGE = "page";
+
     private boolean changed;
+    private int targetPage = -1;
+    private WdNavbar navbar;
+    private Visualizer visualizer;
+    private WdPlot canvas;
+    private TextView visualizerStatus;
+    private LinearLayout countersContainer;
+    private LinearLayout formulasContainer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,10 +71,19 @@ public class Settings extends BaseActivity {
         setupZoomSection();
         renderFolders();
         setupThemeSection();
+        setupAccentSection();
+        updateAccentVisibility();
         setupListSection();
-        ThemeManager.applyTheme(this, root);
+        setupVisualizerSection();
+        applyAppTheme();
         findViewById(R.id.go_about).setOnClickListener(v -> startActivity(new Intent(Settings.this, About.class)));
-        findViewById(R.id.go_back).setOnClickListener(v -> finish());
+        navbar = findViewById(R.id.navbar);
+        navbar.setOnNavigateListener(page -> {
+            if (page == WdNavbar.SETTINGS) return; // already here
+            targetPage = page;
+            finish();
+        });
+        applyAppTheme(); // again, now that the navbar exists
     }
 
     @Override
@@ -74,8 +100,12 @@ public class Settings extends BaseActivity {
 
     @Override
     public void finish() {
-        if (changed) setResult(RESULT_OK);
+        Intent data = new Intent();
+        if (targetPage >= 0) data.putExtra(EXTRA_PAGE, targetPage);
+        setResult(changed ? RESULT_OK : RESULT_CANCELED, data);
         super.finish();
+        // Switching tabs through the navbar should not look like leaving a screen.
+        if (targetPage >= 0) overridePendingTransition(0, 0);
     }
 
     // region System
@@ -279,38 +309,170 @@ public class Settings extends BaseActivity {
 
     // region Themes
 
+    /** Applies the current theme to the whole screen, plus what draws by itself (the preview canvas). */
+    private void applyAppTheme() {
+        ThemeManager.applyTheme(this, findViewById(R.id.root));
+        Themes.Palette palette = ThemeManager.currentPalette(this);
+        canvas.setPalette(palette);
+        if (navbar != null) navbar.setActive(WdNavbar.SETTINGS, palette);
+        refreshVisualizerStatus();
+    }
+
     private void setupThemeSection() {
-        WdRadioGroup themeGroup = findViewById(R.id.theme_group);
-        boolean randomMode = PrefTheme.CATPPUCCIN_MOCHA_RANDOM.equals(prefs.getTheme());
-        String currentTheme = ThemeManager.currentPalette(this).id;
-
-        WdRadio randomRadio = new WdRadio(this);
-        randomRadio.setId(999);
-        randomRadio.setText(getString(R.string.label_theme_random));
-        randomRadio.setTextColor(getResources().getColor(R.color.text));
-        randomRadio.setChecked(randomMode);
-        themeGroup.addView(randomRadio);
-        FontManager.apply(randomRadio, FontManager.getJersey25(this));
-        randomRadio.setOnClickListener(v -> {
-            prefs.setTheme(PrefTheme.CATPPUCCIN_MOCHA_RANDOM);
-            ThemeManager.roll(Settings.this);
-            ThemeManager.applyTheme(Settings.this, findViewById(R.id.root));
-        });
-
-        List<Themes.Palette> palettes = Themes.all();
-        for (int i = 0; i < palettes.size(); i++) {
-            final Themes.Palette palette = palettes.get(i);
-            WdRadio radio = new WdRadio(this);
-            radio.setId(1000 + i);
-            radio.setText(palette.label);
-            radio.setTextColor(getResources().getColor(R.color.text));
-            radio.setChecked(!randomMode && palette.id.equals(currentTheme));
-            themeGroup.addView(radio);
-            FontManager.apply(radio, FontManager.getJersey25(this));
+        WdRadioGroup group = findViewById(R.id.theme_group);
+        String current = prefs.getFlavor();
+        for (final Themes.Flavor flavor : Themes.flavors()) {
+            WdRadio radio = group.addOption(flavor.label);
+            radio.setChecked(flavor.id.equals(current));
             radio.setOnClickListener(v -> {
-                prefs.setTheme(palette.id);
-                ThemeManager.applyTheme(Settings.this, findViewById(R.id.root));
+                prefs.setFlavor(flavor.id);
+                updateAccentVisibility();
+                applyAppTheme();
             });
+        }
+        FontManager.apply(group, FontManager.getJersey25(this));
+    }
+
+    /** Mono themes have no accent: the section is hidden while one is selected, and the choice is kept for later. */
+    private void updateAccentVisibility() {
+        int visibility = Themes.hasAccents(prefs.getFlavor()) ? View.VISIBLE : View.GONE;
+        findViewById(R.id.accent_section).setVisibility(visibility);
+        findViewById(R.id.accent_separator).setVisibility(visibility);
+    }
+
+    private void setupAccentSection() {
+        WdRadioGroup group = findViewById(R.id.accent_group);
+        String current = prefs.getAccent();
+        boolean random = PrefTheme.ACCENT_RANDOM.equals(current);
+
+        WdRadio randomRadio = group.addOption(getString(R.string.label_accent_random));
+        randomRadio.setChecked(random);
+        randomRadio.setOnClickListener(v -> {
+            prefs.setAccent(PrefTheme.ACCENT_RANDOM);
+            ThemeManager.roll(Settings.this);
+            applyAppTheme();
+        });
+        for (final Themes.Accent accent : Themes.accents()) {
+            WdRadio radio = group.addOption(accent.label);
+            radio.setChecked(!random && accent.id.equals(current));
+            radio.setOnClickListener(v -> {
+                prefs.setAccent(accent.id);
+                applyAppTheme();
+            });
+        }
+        FontManager.apply(group, FontManager.getJersey25(this));
+    }
+
+    // endregion
+
+    // region Visualizer
+
+    private interface TextSink {
+        void set(String text);
+    }
+
+    private String lastError;
+    private int lastPoints;
+
+    private void setupVisualizerSection() {
+        visualizer = VisualizerStore.load(this);
+        canvas = findViewById(R.id.canvas_graph);
+        visualizerStatus = findViewById(R.id.visualizer_status);
+        countersContainer = findViewById(R.id.counters_container);
+        formulasContainer = findViewById(R.id.formulas_container);
+        findViewById(R.id.add_counter).setOnClickListener(v -> {
+            visualizer.counters.add(new Visualizer.Counter(visualizer.nextAlias(), "1", "10", "100"));
+            renderVisualizerFields();
+            onVisualizerChanged();
+        });
+        findViewById(R.id.add_formula).setOnClickListener(v -> {
+            visualizer.formulas.add(new Visualizer.FormulaDef("", ""));
+            renderVisualizerFields();
+            onVisualizerChanged();
+        });
+        renderVisualizerFields();
+        onVisualizerChanged();
+    }
+
+    /** One block per counter and per formula. Rebuilt when one is added or removed. */
+    private void renderVisualizerFields() {
+        LayoutInflater inflater = LayoutInflater.from(this);
+        countersContainer.removeAllViews();
+        for (int i = 0; i < visualizer.counters.size(); i++) {
+            final Visualizer.Counter counter = visualizer.counters.get(i);
+            View block = inflater.inflate(R.layout.list_item_counter, countersContainer, false);
+            ((TextView) block.findViewById(R.id.counter_name)).setText(getString(R.string.label_counter_title, i + 1));
+            bind(block, R.id.counter_alias, counter.alias, text -> counter.alias = text);
+            bind(block, R.id.counter_from, counter.from, text -> counter.from = text);
+            bind(block, R.id.counter_to, counter.to, text -> counter.to = text);
+            bind(block, R.id.counter_delay, counter.delay, text -> counter.delay = text);
+            block.findViewById(R.id.counter_delete).setOnClickListener(v -> {
+                visualizer.counters.remove(counter);
+                renderVisualizerFields();
+                onVisualizerChanged();
+            });
+            countersContainer.addView(block);
+        }
+        formulasContainer.removeAllViews();
+        for (int i = 0; i < visualizer.formulas.size(); i++) {
+            final Visualizer.FormulaDef formula = visualizer.formulas.get(i);
+            View block = inflater.inflate(R.layout.list_item_formula, formulasContainer, false);
+            ((TextView) block.findViewById(R.id.formula_name)).setText(getString(R.string.label_formula_title, i + 1));
+            bind(block, R.id.formula_x, formula.x, text -> formula.x = text);
+            bind(block, R.id.formula_y, formula.y, text -> formula.y = text);
+            block.findViewById(R.id.formula_delete).setOnClickListener(v -> {
+                visualizer.formulas.remove(formula);
+                renderVisualizerFields();
+                onVisualizerChanged();
+            });
+            formulasContainer.addView(block);
+        }
+        FontManager.apply(countersContainer, FontManager.getJersey25(this));
+        FontManager.apply(formulasContainer, FontManager.getJersey25(this));
+        ThemeManager.applyTheme(this, countersContainer);
+        ThemeManager.applyTheme(this, formulasContainer);
+        ZoomManager.apply(this, countersContainer);
+        ZoomManager.apply(this, formulasContainer);
+    }
+
+    private void bind(View block, int id, String value, final TextSink sink) {
+        EditText field = block.findViewById(id);
+        field.setText(value);
+        field.addTextChangedListener(new TextWatcher() {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            }
+
+            public void afterTextChanged(Editable s) {
+                sink.set(s.toString());
+                onVisualizerChanged();
+            }
+        });
+    }
+
+    /**
+     * Saves and redraws on every keystroke. Half-typed input is normal, so on a problem the last good drawing stays
+     * and the status line says what is wrong.
+     */
+    private void onVisualizerChanged() {
+        VisualizerStore.save(this, visualizer);
+        Visualizer.Result result = visualizer.build();
+        lastError = result.error;
+        lastPoints = result.points;
+        if (result.error == null) canvas.setSeries(result.series);
+        refreshVisualizerStatus();
+    }
+
+    private void refreshVisualizerStatus() {
+        Themes.Palette palette = ThemeManager.currentPalette(this);
+        if (lastError != null) {
+            visualizerStatus.setText(lastError);
+            visualizerStatus.setTextColor(palette.error);
+        } else {
+            visualizerStatus.setText(lastPoints == 0 ? getString(R.string.status_visualizer_empty) : getString(R.string.status_visualizer_points, lastPoints));
+            visualizerStatus.setTextColor(palette.text);
         }
     }
 
