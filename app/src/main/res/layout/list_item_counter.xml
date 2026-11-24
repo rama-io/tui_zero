@@ -3,7 +3,10 @@
     android:id="@+id/counter_block"
     style="@style/VerticalList">
 
-    <LinearLayout style="@style/HorizontalList">
+    <LinearLayout
+        style="@style/HorizontalList_BG2"
+        android:background="@color/surface_1">
+
         <LinearLayout
             android:id="@+id/counter_header"
             style="@style/HorizontalList"
@@ -14,9 +17,9 @@
             <TextView
                 android:id="@+id/counter_indicator"
                 style="@style/Text"
-                android:layout_width="wrap_content"
-                android:paddingLeft="8sp"
-                android:paddingRight="8sp" />
+                android:layout_width="wrap_content" />
+
+            <View style="@style/SeparatorListHorizontal" />
 
             <TextView
                 android:id="@+id/counter_name"
@@ -53,53 +56,50 @@
 
         <View style="@style/SeparatorListVertical" />
 
-        <LinearLayout
-            style="@style/VerticalList_BG2">
+        <LinearLayout style="@style/VerticalList_BG2">
 
-        <TextView
-            style="@style/Text"
-            android:text="@string/label_counter_alias" />
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_counter_alias" />
 
-        <View style="@style/SeparatorListVertical" />
+            <View style="@style/SeparatorListVertical" />
 
-        <EditText
-            android:id="@+id/counter_alias"
-            style="@style/EditText"
-            android:inputType="textNoSuggestions" />
+            <EditText
+                android:id="@+id/counter_alias"
+                style="@style/EditText"
+                android:inputType="textNoSuggestions" />
         </LinearLayout>
 
         <View style="@style/SeparatorListVertical" />
 
-        <LinearLayout
-            style="@style/VerticalList_BG2">
+        <LinearLayout style="@style/VerticalList_BG2">
 
-        <TextView
-            style="@style/Text"
-            android:text="@string/label_counter_from" />
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_counter_from" />
 
-        <View style="@style/SeparatorListVertical" />
+            <View style="@style/SeparatorListVertical" />
 
-        <EditText
-            android:id="@+id/counter_from"
-            style="@style/EditText"
-            android:inputType="numberSigned|numberDecimal" />
+            <EditText
+                android:id="@+id/counter_from"
+                style="@style/EditText"
+                android:inputType="numberSigned|numberDecimal" />
         </LinearLayout>
 
         <View style="@style/SeparatorListVertical" />
 
-        <LinearLayout
-            style="@style/VerticalList_BG2">
+        <LinearLayout style="@style/VerticalList_BG2">
 
-        <TextView
-            style="@style/Text"
-            android:text="@string/label_counter_to" />
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_counter_to" />
 
-        <View style="@style/SeparatorListVertical" />
+            <View style="@style/SeparatorListVertical" />
 
-        <EditText
-            android:id="@+id/counter_to"
-            style="@style/EditText"
-            android:inputType="numberSigned|numberDecimal" />
+            <EditText
+                android:id="@+id/counter_to"
+                style="@style/EditText"
+                android:inputType="numberSigned|numberDecimal" />
 
         </LinearLayout>
 

@@ -3,7 +3,9 @@
     android:id="@+id/formula_block"
     style="@style/VerticalList">
 
-    <LinearLayout style="@style/HorizontalList">
+    <LinearLayout
+        style="@style/HorizontalList_BG2"
+        android:background="@color/surface_1">
 
         <LinearLayout
             android:id="@+id/formula_header"
@@ -15,9 +17,9 @@
             <TextView
                 android:id="@+id/formula_indicator"
                 style="@style/Text"
-                android:layout_width="wrap_content"
-                android:paddingLeft="8sp"
-                android:paddingRight="8sp" />
+                android:layout_width="wrap_content" />
+
+            <View style="@style/SeparatorListHorizontal" />
 
             <TextView
                 android:id="@+id/formula_name"

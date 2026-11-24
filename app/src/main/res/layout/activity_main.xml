@@ -35,120 +35,125 @@
             android:layout_height="match_parent" />
     </FrameLayout>
 
-    <View style="@style/SeparatorListVertical" />
-
-    <FrameLayout
-        android:id="@+id/currently_playing_display"
-        android:layout_width="match_parent"
-        android:layout_height="30sp"
-        android:background="@color/crust">
-
-        <View
-            android:id="@+id/progress_bg"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:background="@color/accent_2" />
-
-        <TextView
-            android:id="@+id/currently_playing_text"
-            style="@style/Text"
-            android:layout_width="match_parent"
-            android:layout_gravity="center"
-            android:ellipsize="end"
-            android:gravity="center"
-            android:maxLines="1"
-            android:paddingLeft="16sp"
-            android:paddingRight="16sp"
-            android:singleLine="true"
-            android:text="@string/placeholder_now_playing"
-            android:textColor="@color/accent" />
-    </FrameLayout>
-
-    <View style="@style/SeparatorListVertical" />
-
     <LinearLayout
-        style="@style/HorizontalList"
-        android:background="@color/crust"
-        android:baselineAligned="false"
-        android:gravity="center"
-        android:padding="8dp">
+        android:id="@+id/player_controls"
+        style="@style/VerticalList">
+
+        <View style="@style/SeparatorListVertical" />
 
         <FrameLayout
-            android:id="@+id/repeat_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            android:id="@+id/currently_playing_display"
+            android:layout_width="match_parent"
+            android:layout_height="30sp"
+            android:background="@color/crust">
 
-            <ImageView
-                android:id="@+id/repeat_icon"
-                android:layout_width="28sp"
-                android:layout_height="28sp"
+            <View
+                android:id="@+id/progress_bg"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:background="@color/accent_2" />
+
+            <TextView
+                android:id="@+id/currently_playing_text"
+                style="@style/Text"
+                android:layout_width="match_parent"
                 android:layout_gravity="center"
-                android:contentDescription="@string/altdescr_repeat"
-                android:src="@drawable/px_repeat"
-                android:tint="@color/text" />
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:paddingLeft="16sp"
+                android:paddingRight="16sp"
+                android:singleLine="true"
+                android:text="@string/placeholder_now_playing"
+                android:textColor="@color/accent" />
         </FrameLayout>
 
-        <FrameLayout
-            android:id="@+id/prev_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+        <View style="@style/SeparatorListVertical" />
 
-            <ImageView
-                android:layout_width="36sp"
-                android:layout_height="36sp"
-                android:layout_gravity="center"
-                android:contentDescription="@string/altdescr_previous"
-                android:src="@drawable/px_prev"
-                android:tint="@color/text" />
-        </FrameLayout>
+        <LinearLayout
+            style="@style/HorizontalList"
+            android:background="@color/crust"
+            android:baselineAligned="false"
+            android:gravity="center"
+            android:padding="8dp">
 
-        <FrameLayout
-            android:id="@+id/play_pause_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            <FrameLayout
+                android:id="@+id/repeat_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
-            <ImageView
-                android:id="@+id/play_pause_icon"
-                android:layout_width="42sp"
-                android:layout_height="42sp"
-                android:layout_gravity="center"
-                android:contentDescription="@string/altdescr_play_pause"
-                android:src="@drawable/px_play_circle"
-                android:tint="@color/text" />
-        </FrameLayout>
+                <ImageView
+                    android:id="@+id/repeat_icon"
+                    android:layout_width="28sp"
+                    android:layout_height="28sp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/altdescr_repeat"
+                    android:src="@drawable/px_repeat"
+                    android:tint="@color/text" />
+            </FrameLayout>
 
-        <FrameLayout
-            android:id="@+id/next_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            <FrameLayout
+                android:id="@+id/prev_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
-            <ImageView
-                android:layout_width="36sp"
-                android:layout_height="36sp"
-                android:layout_gravity="center"
-                android:contentDescription="@string/altdescr_next"
-                android:src="@drawable/px_next"
-                android:tint="@color/text" />
-        </FrameLayout>
+                <ImageView
+                    android:layout_width="36sp"
+                    android:layout_height="36sp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/altdescr_previous"
+                    android:src="@drawable/px_prev"
+                    android:tint="@color/text" />
+            </FrameLayout>
 
-        <FrameLayout
-            android:id="@+id/shuffle_button"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+            <FrameLayout
+                android:id="@+id/play_pause_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
 
-            <ImageView
-                android:layout_width="28sp"
-                android:layout_height="28sp"
-                android:layout_gravity="center"
-                android:contentDescription="@string/altdescr_shuffle"
-                android:src="@drawable/px_shuffle"
-                android:tint="@color/text" />
-        </FrameLayout>
+                <ImageView
+                    android:id="@+id/play_pause_icon"
+                    android:layout_width="42sp"
+                    android:layout_height="42sp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/altdescr_play_pause"
+                    android:src="@drawable/px_play_circle"
+                    android:tint="@color/text" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/next_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:layout_width="36sp"
+                    android:layout_height="36sp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/altdescr_next"
+                    android:src="@drawable/px_next"
+                    android:tint="@color/text" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/shuffle_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:layout_width="28sp"
+                    android:layout_height="28sp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/altdescr_shuffle"
+                    android:src="@drawable/px_shuffle"
+                    android:tint="@color/text" />
+            </FrameLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <View style="@style/SeparatorListVertical" />

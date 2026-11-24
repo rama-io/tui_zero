@@ -12,8 +12,10 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -33,7 +35,6 @@ import com.rama.tui_zero.objects.PrefTheme;
 import com.rama.tui_zero.objects.Themes;
 import com.rama.tui_zero.objects.Visualizer;
 import com.rama.tui_zero.widgets.WdCheckbox;
-import com.rama.tui_zero.widgets.WdPlot;
 import com.rama.tui_zero.widgets.WdRadio;
 import com.rama.tui_zero.widgets.WdRadioGroup;
 
@@ -80,11 +81,10 @@ public class SettingsPage implements Page {
     private boolean changed;
 
     private Visualizer visualizer;
-    private WdPlot canvas;
     private TextView visualizerStatus;
     private LinearLayout countersContainer;
     private LinearLayout formulasContainer;
-    private final List<TextView> formulaTitles = new ArrayList<TextView>();
+    private final List<View> formulaColors = new ArrayList<View>();
     private String lastError;
     private int lastPoints;
 
@@ -128,8 +128,7 @@ public class SettingsPage implements Page {
 
     @Override
     public void refreshTheme(Themes.Palette palette) {
-        canvas.setPalette(palette);
-        colorFormulaTitles(); // after the theme, which turns every accent colored text into the current accent
+        colorFormulaIcons(); // after the theme, which resets every icon to the text color
         refreshVisualizerStatus();
     }
 
@@ -389,7 +388,6 @@ public class SettingsPage implements Page {
 
     private void setupVisualizerSection() {
         visualizer = VisualizerStore.load(activity);
-        canvas = root.findViewById(R.id.canvas_graph);
         visualizerStatus = root.findViewById(R.id.visualizer_status);
         countersContainer = root.findViewById(R.id.counters_container);
         formulasContainer = root.findViewById(R.id.formulas_container);
@@ -442,13 +440,12 @@ public class SettingsPage implements Page {
             countersContainer.addView(block);
         }
         formulasContainer.removeAllViews();
-        formulaTitles.clear();
+        formulaColors.clear();
         for (int i = 0; i < visualizer.formulas.size(); i++) {
             final Visualizer.FormulaDef formula = visualizer.formulas.get(i);
             View block = inflater.inflate(R.layout.list_item_formula, formulasContainer, false);
-            TextView title = block.findViewById(R.id.formula_name);
-            title.setText(activity.getString(R.string.label_formula_title, i + 1));
-            formulaTitles.add(title);
+            ((TextView) block.findViewById(R.id.formula_name)).setText(activity.getString(R.string.label_formula_title, i + 1));
+            formulaColors.add(block.findViewById(R.id.formula_color));
             bind(block, R.id.formula_x, formula.x, text -> formula.x = text);
             bind(block, R.id.formula_y, formula.y, text -> formula.y = text);
             bindChrome(block, R.id.formula_enabled, R.id.formula_header, R.id.formula_indicator, R.id.formula_body,
@@ -473,7 +470,7 @@ public class SettingsPage implements Page {
         ThemeManager.applyTheme(activity, formulasContainer);
         ZoomManager.apply(activity, countersContainer);
         ZoomManager.apply(activity, formulasContainer);
-        colorFormulaTitles(); // after the theme, which would turn every accent colored text into the current accent
+        colorFormulaIcons(); // after the theme, which resets every icon to the text color
     }
 
     /**
@@ -509,11 +506,13 @@ public class SettingsPage implements Page {
         indicator.setText(collapsed ? R.string.label_expand_indicator : R.string.label_collapse_indicator);
     }
 
-    /** Each formula title wears the color of its line. */
-    private void colorFormulaTitles() {
+    /** Each formula's circle icon shows the color of its line (the title stays in the normal text color). */
+    private void colorFormulaIcons() {
         Themes.Palette palette = ThemeManager.currentPalette(activity);
-        for (int i = 0; i < formulaTitles.size() && i < visualizer.formulas.size(); i++) {
-            formulaTitles.get(i).setTextColor(Themes.lineColor(palette, visualizer.formulas.get(i).color, i));
+        for (int i = 0; i < formulaColors.size() && i < visualizer.formulas.size(); i++) {
+            ViewGroup holder = (ViewGroup) formulaColors.get(i);
+            int color = Themes.lineColor(palette, visualizer.formulas.get(i).color, i);
+            ((ImageView) holder.getChildAt(0)).setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
         }
     }
 
@@ -566,15 +565,14 @@ public class SettingsPage implements Page {
     }
 
     /**
-     * Saves and redraws on every keystroke. Half-typed input is normal, so on a problem the last good drawing stays
-     * and the status line says what is wrong.
+     * Saves on every keystroke and checks the setup; the visualizer page draws it when it is shown. Half-typed input
+     * is normal, so the status line says what is wrong.
      */
     private void onVisualizerChanged() {
         VisualizerStore.save(activity, visualizer);
         Visualizer.Result result = visualizer.build();
         lastError = result.error;
         lastPoints = result.points;
-        if (result.error == null) canvas.setScene(result); // restarts the animation
         refreshVisualizerStatus();
     }
 

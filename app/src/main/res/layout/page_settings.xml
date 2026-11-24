@@ -214,13 +214,6 @@
                 app:header="@string/header_visualizer"
                 app:key="settings:section:visualizer">
 
-                <com.rama.tui_zero.widgets.WdPlot
-                    android:id="@+id/canvas_graph"
-                    android:layout_width="match_parent"
-                    android:layout_height="300dp" />
-
-                <View style="@style/SeparatorListVertical" />
-
                 <TextView
                     android:id="@+id/visualizer_status"
                     style="@style/Text_Center"

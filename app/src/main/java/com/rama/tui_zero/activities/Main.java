@@ -51,6 +51,7 @@ public class Main extends BaseActivity {
     private PlaylistPage playlist;
     private SettingsPage settings;
     private int currentPage = WdNavbar.PLAYLIST;
+    private View playerControls;
     private View progressBar;
     private View nowPlaying;
     private TextView nowPlayingText;
@@ -80,6 +81,7 @@ public class Main extends BaseActivity {
 
         root = findViewById(R.id.root);
         SystemBars.applyInsets(root);
+        playerControls = findViewById(R.id.player_controls);
         progressBar = findViewById(R.id.progress_bg);
         nowPlaying = findViewById(R.id.currently_playing_display);
         nowPlayingText = findViewById(R.id.currently_playing_text);
@@ -255,6 +257,8 @@ public class Main extends BaseActivity {
         for (int i = 0; i < pageViews.length; i++) {
             pageViews[i].setVisibility(i == page ? View.VISIBLE : View.GONE);
         }
+        // The player (now playing bar and buttons) belongs to the playlist and the visualizer, not to Settings.
+        playerControls.setVisibility(page == WdNavbar.SETTINGS ? View.GONE : View.VISIBLE);
         pages[page].onShow();
         refreshTheme();
     }
