@@ -1,5 +1,8 @@
 # Changelog
 
+## 2
+- Add visualizer
+
 ## 1
 - Initial Java port of Tui, following the mako_zero structure
 - No third-party dependencies, no submodule

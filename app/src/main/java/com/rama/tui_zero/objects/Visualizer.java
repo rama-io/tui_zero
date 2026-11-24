@@ -20,14 +20,16 @@ public final class Visualizer {
         public boolean keepTrail = true;
         public String delay = "";
 
-        public Counter(String alias, String from, String to) {
+        public Counter(String alias, String from, String to, boolean infinite, boolean alternate) {
             this.alias = alias;
             this.from = from;
             this.to = to;
+            this.infinite = infinite;
+            this.alternate = alternate;
         }
 
-        public Counter(String alias, String from, String to, String delay) {
-            this(alias, from, to);
+        public Counter(String alias, String from, String to, String delay, boolean infinite, boolean alternate) {
+            this(alias, from, to, infinite, alternate);
             this.delay = delay;
         }
     }
@@ -172,8 +174,9 @@ public final class Visualizer {
 
     public static Visualizer example() {
         Visualizer v = new Visualizer();
-        v.counters.add(new Counter("t", "1", "360", "10"));
-        v.formulas.add(new FormulaDef("sin($t*pi/180)", "cos($t*pi/180)"));
+        v.counters.add(new Counter("t", "0", "45", "10", true, true));
+        v.counters.add(new Counter("u", "1", "10", "50", true, true));
+        v.formulas.add(new FormulaDef("cos($t*8*pi/180)*$u", "sin($t*8*pi/180)*$u"));
         return v;
     }
 

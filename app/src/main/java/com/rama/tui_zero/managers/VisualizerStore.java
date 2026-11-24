@@ -29,7 +29,14 @@ public final class VisualizerStore {
             JSONArray counters = json.optJSONArray("counters");
             for (int i = 0; counters != null && i < counters.length(); i++) {
                 JSONObject c = counters.getJSONObject(i);
-                Visualizer.Counter counter = new Visualizer.Counter(c.optString("alias"), c.optString("from"), c.optString("to"));
+                Visualizer.Counter counter = new Visualizer.Counter(
+                        c.optString("alias"),
+                        c.optString("from"),
+                        c.optString("to"),
+                        c.optString("delay", sharedDelay),
+                        c.optBoolean("infinite", false),
+                        c.optBoolean("alternate", false)
+                );
                 counter.infinite = c.optBoolean("infinite", false);
                 counter.alternate = c.optBoolean("alternate", false);
                 counter.enabled = c.optBoolean("enabled", true);

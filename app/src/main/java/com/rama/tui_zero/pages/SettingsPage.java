@@ -360,7 +360,7 @@ public class SettingsPage implements Page {
         formulasContainer = root.findViewById(R.id.formulas_container);
 
         root.findViewById(R.id.add_counter).setOnClickListener(v -> {
-            visualizer.counters.add(new Visualizer.Counter(visualizer.nextAlias(), "1", "10", "10"));
+            visualizer.counters.add(new Visualizer.Counter(visualizer.nextAlias(), "1", "10", "10", true, true));
             renderVisualizerFields();
             onVisualizerChanged();
         });
