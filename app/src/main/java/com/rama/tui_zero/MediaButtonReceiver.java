@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Build;
 import android.view.KeyEvent;
 
-/** Headset / Bluetooth media keys that arrive while the activity is not in front. */
 public class MediaButtonReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {

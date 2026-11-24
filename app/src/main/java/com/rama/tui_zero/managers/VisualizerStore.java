@@ -10,14 +10,12 @@ import org.json.JSONObject;
 
 import java.util.Random;
 
-/** Saves the visualizer setup as one JSON string in the preferences. */
 public final class VisualizerStore {
     private VisualizerStore() {
     }
 
     public static Visualizer load(Context context) {
         Visualizer v = read(PrefsManager.getInstance(context).getVisualizerJson());
-        // Colors are picked once and then saved, so a line keeps its color between launches.
         if (v.assignMissingColors(new Random())) save(context, v);
         return v;
     }
@@ -27,7 +25,7 @@ public final class VisualizerStore {
         Visualizer v = new Visualizer();
         try {
             JSONObject json = new JSONObject(raw);
-            String sharedDelay = json.optString("delay"); // saved by the version where one delay was shared
+            String sharedDelay = json.optString("delay");
             JSONArray counters = json.optJSONArray("counters");
             for (int i = 0; counters != null && i < counters.length(); i++) {
                 JSONObject c = counters.getJSONObject(i);
@@ -70,7 +68,6 @@ public final class VisualizerStore {
             PrefsManager.getInstance(context).setVisualizerJson(new JSONObject()
                     .put("counters", counters).put("formulas", formulas).toString());
         } catch (JSONException ignored) {
-            // keys are constants and values are strings, so this cannot happen
         }
     }
 }

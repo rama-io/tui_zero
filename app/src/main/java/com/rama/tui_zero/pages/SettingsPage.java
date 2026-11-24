@@ -44,18 +44,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
-/**
- * Settings, as a page of the main activity so the navbar and the player stay where they are. It used to be an
- * activity of its own. The main activity forwards what only an activity receives (permission and activity results,
- * pause) and gives the page a Host for what only it can do.
- */
 public class SettingsPage implements Page {
-    /** What the page needs from the main activity. */
     public interface Host {
-        /** Applies the current theme and zoom to the whole screen, and tells every page. */
         void refreshTheme();
 
-        /** The track list is out of date: folders, formats, sorting or .nomedia changed. Called when the page is left. */
         void onLibrarySettingsChanged();
     }
 
@@ -105,11 +97,9 @@ public class SettingsPage implements Page {
         root.findViewById(R.id.go_about).setOnClickListener(v -> activity.startActivity(new Intent(activity, About.class)));
     }
 
-    // region Page
-
     @Override
     public void onShow() {
-        refreshPermissionButtonStates(); // also covers coming back from the system's permission screens
+        refreshPermissionButtonStates();
     }
 
     @Override
@@ -121,14 +111,13 @@ public class SettingsPage implements Page {
         }
     }
 
-    /** The app is going to the background while this page may be showing. */
     public void flush() {
         saveZoomFromField();
     }
 
     @Override
     public void refreshTheme(Themes.Palette palette) {
-        colorFormulaIcons(); // after the theme, which resets every icon to the text color
+        colorFormulaIcons();
         refreshVisualizerStatus();
     }
 
@@ -136,20 +125,14 @@ public class SettingsPage implements Page {
     public void destroy() {
     }
 
-    /** Forwarded by the main activity. */
     public void onPermissionsResult() {
         refreshPermissionButtonStates();
         if (MusicManager.hasPermission(activity)) rescan();
     }
 
-    /** Forwarded by the main activity. */
     public void onStorageResult() {
         if (MusicManager.hasPermission(activity)) rescan();
     }
-
-    // endregion
-
-    // region System
 
     private void setupSystemSection() {
         root.findViewById(R.id.media_permission_button).setOnClickListener(v -> {
@@ -211,8 +194,10 @@ public class SettingsPage implements Page {
         keepAwake.setChecked(prefs.isKeepScreenAwake());
         keepAwake.setOnCheckedChangeListener(checked -> {
             prefs.setKeepScreenAwake(checked);
-            if (checked) activity.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-            else activity.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            if (checked)
+                activity.getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+            else
+                activity.getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         });
     }
 
@@ -251,15 +236,10 @@ public class SettingsPage implements Page {
             PowerManager pm = (PowerManager) activity.getSystemService(Context.POWER_SERVICE);
             setButtonState(R.id.background_playback_button, pm != null && pm.isIgnoringBatteryOptimizations(activity.getPackageName()));
         }
-        // Rendering the folder list needs a finished scan, which needs permission.
         if (prefs.getAllFolders().isEmpty() && MusicManager.hasPermission(activity)) {
             rescan();
         }
     }
-
-    // endregion
-
-    // region Zoom
 
     private void setupZoomSection() {
         final EditText zoom = root.findViewById(R.id.zoom);
@@ -275,7 +255,7 @@ public class SettingsPage implements Page {
 
     private void applyZoom() {
         saveZoomFromField();
-        host.refreshTheme(); // zooms the whole screen, and the plot labels with it
+        host.refreshTheme();
     }
 
     private void saveZoomFromField() {
@@ -290,10 +270,6 @@ public class SettingsPage implements Page {
         if (!normalized.equals(zoom.getText().toString())) zoom.setText(normalized);
         prefs.setZoomPercent(percent);
     }
-
-    // endregion
-
-    // region Folders
 
     private void rescan() {
         MusicManager.loadTracks(activity, success -> {
@@ -333,10 +309,6 @@ public class SettingsPage implements Page {
         ZoomManager.apply(activity, foldersContainer);
     }
 
-    // endregion
-
-    // region Themes
-
     private void setupThemeSection() {
         WdRadioGroup group = root.findViewById(R.id.theme_group);
         String current = prefs.getFlavor();
@@ -352,7 +324,6 @@ public class SettingsPage implements Page {
         FontManager.apply(group, FontManager.getJersey25(activity));
     }
 
-    /** Mono themes have no accent: the section is hidden while one is selected, and the choice is kept for later. */
     private void updateAccentVisibility() {
         int visibility = Themes.hasAccents(prefs.getFlavor()) ? View.VISIBLE : View.GONE;
         root.findViewById(R.id.accent_section).setVisibility(visibility);
@@ -382,10 +353,6 @@ public class SettingsPage implements Page {
         FontManager.apply(group, FontManager.getJersey25(activity));
     }
 
-    // endregion
-
-    // region Visualizer
-
     private void setupVisualizerSection() {
         visualizer = VisualizerStore.load(activity);
         visualizerStatus = root.findViewById(R.id.visualizer_status);
@@ -406,7 +373,6 @@ public class SettingsPage implements Page {
         onVisualizerChanged();
     }
 
-    /** One block per counter and per formula. Rebuilt when one is added or removed. */
     private void renderVisualizerFields() {
         LayoutInflater inflater = LayoutInflater.from(activity);
         countersContainer.removeAllViews();
@@ -466,13 +432,9 @@ public class SettingsPage implements Page {
         ThemeManager.applyTheme(activity, formulasContainer);
         ZoomManager.apply(activity, countersContainer);
         ZoomManager.apply(activity, formulasContainer);
-        colorFormulaIcons(); // after the theme, which resets every icon to the text color
+        colorFormulaIcons();
     }
 
-    /**
-     * What every counter and formula block shares: a checkbox that turns it on and off, a title that folds the block
-     * into itself, and a delete button.
-     */
     private void bindChrome(final View block, int enabledId, int headerId, int indicatorId, int bodyId, int deleteId,
                             boolean enabled, boolean collapsed, final ItemState state, final Runnable onDelete) {
         WdCheckbox box = block.findViewById(enabledId);
@@ -491,7 +453,7 @@ public class SettingsPage implements Page {
             boolean next = body.getVisibility() == View.VISIBLE;
             showCollapsed(body, indicator, next);
             state.setCollapsed(next);
-            VisualizerStore.save(activity, visualizer); // only the fold changed: nothing to redraw
+            VisualizerStore.save(activity, visualizer);
         }));
 
         block.findViewById(deleteId).setOnClickListener(v -> onDelete.run());
@@ -502,7 +464,6 @@ public class SettingsPage implements Page {
         indicator.setText(collapsed ? R.string.label_expand_indicator : R.string.label_collapse_indicator);
     }
 
-    /** Each formula's circle icon shows the color of its line (the title stays in the normal text color). */
     private void colorFormulaIcons() {
         Themes.Palette palette = ThemeManager.currentPalette(activity);
         for (int i = 0; i < formulaColors.size() && i < visualizer.formulas.size(); i++) {
@@ -512,7 +473,6 @@ public class SettingsPage implements Page {
         }
     }
 
-    /** Infinite loops the counter; the two radios (how it loops) only matter, and only show, when it is on. */
     private void bindCounterOptions(View block, final Visualizer.Counter counter) {
         WdCheckbox trail = block.findViewById(R.id.counter_trail);
         trail.setChecked(counter.keepTrail);
@@ -567,10 +527,6 @@ public class SettingsPage implements Page {
         };
     }
 
-    /**
-     * Saves on every keystroke and checks the setup; the visualizer page draws it when it is shown. Half-typed input
-     * is normal, so the status line says what is wrong.
-     */
     private void onVisualizerChanged() {
         VisualizerStore.save(activity, visualizer);
         Visualizer.Result result = visualizer.build();
@@ -591,10 +547,6 @@ public class SettingsPage implements Page {
             visualizerStatus.setTextColor(palette.text);
         }
     }
-
-    // endregion
-
-    // region List
 
     private void setupListSection() {
         WdRadioGroup sortGroup = root.findViewById(R.id.sort_group);
@@ -642,6 +594,4 @@ public class SettingsPage implements Page {
         MusicManager.reSort(activity);
         changed = true;
     }
-
-    // endregion
 }

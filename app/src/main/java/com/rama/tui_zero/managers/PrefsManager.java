@@ -18,9 +18,6 @@ public final class PrefsManager {
     public static final String SORT_ZA = "za";
 
     private static final String PREFS_NAME = "tui_zero";
-
-    private static final String KEY_THEME = "settings:theme"; // before the flavor / accent split, only read to migrate
-    private static final String KEY_THEME_ROLLED_ID = "settings:theme_rolled_id";
     private static final String KEY_FLAVOR = "settings:flavor";
     private static final String KEY_ACCENT = "settings:accent";
     private static final String KEY_ACCENT_ROLLED = "settings:accent_rolled";
@@ -51,9 +48,6 @@ public final class PrefsManager {
         return instance;
     }
 
-    // Visualizer
-
-    /** Null until the visualizer setup was saved once. */
     public String getVisualizerJson() {
         return prefs.getString(KEY_VISUALIZER, null);
     }
@@ -62,11 +56,7 @@ public final class PrefsManager {
         prefs.edit().putString(KEY_VISUALIZER, json).apply();
     }
 
-    // Appearance
-
-    /** One of the Themes flavor ids (mocha, macchiato, frappe, latte). */
     public String getFlavor() {
-        migrateOldTheme();
         String id = prefs.getString(KEY_FLAVOR, PrefTheme.DEFAULT_FLAVOR);
         return Themes.isFlavor(id) ? id : PrefTheme.DEFAULT_FLAVOR;
     }
@@ -75,9 +65,7 @@ public final class PrefsManager {
         prefs.edit().putString(KEY_FLAVOR, flavorId).apply();
     }
 
-    /** A Themes accent id, or PrefTheme.ACCENT_RANDOM. */
     public String getAccent() {
-        migrateOldTheme();
         String id = prefs.getString(KEY_ACCENT, PrefTheme.DEFAULT_ACCENT);
         return Themes.isAccent(id) || PrefTheme.ACCENT_RANDOM.equals(id) ? id : PrefTheme.DEFAULT_ACCENT;
     }
@@ -86,7 +74,6 @@ public final class PrefsManager {
         prefs.edit().putString(KEY_ACCENT, accentId).apply();
     }
 
-    /** The accent last picked while the accent is "random". */
     public String getRolledAccent() {
         String id = prefs.getString(KEY_ACCENT_ROLLED, "mauve");
         return Themes.isAccent(id) ? id : "mauve";
@@ -96,28 +83,6 @@ public final class PrefsManager {
         prefs.edit().putString(KEY_ACCENT_ROLLED, accentId).apply();
     }
 
-    /**
-     * Older builds stored one id such as "catppuccin_mocha_blue", "catppuccin_mocha_random" or "catppuccin_latte".
-     * Turns it into the flavor and accent it meant, once.
-     */
-    private void migrateOldTheme() {
-        if (!prefs.contains(KEY_THEME)) return;
-        String old = prefs.getString(KEY_THEME, "");
-        String flavor = PrefTheme.DEFAULT_FLAVOR;
-        String accent = PrefTheme.ACCENT_RANDOM;
-        if ("mono_dark".equals(old) || "mono_light".equals(old)) {
-            flavor = old;
-        } else if ("catppuccin_latte".equals(old)) {
-            flavor = "latte";
-            accent = "blue"; // the only accent the old latte had
-        } else if (old.startsWith("catppuccin_mocha_")) {
-            String tail = old.substring("catppuccin_mocha_".length());
-            if (Themes.isAccent(tail)) accent = tail;
-        }
-        prefs.edit().putString(KEY_FLAVOR, flavor).putString(KEY_ACCENT, accent)
-                .remove(KEY_THEME).remove(KEY_THEME_ROLLED_ID).apply();
-    }
-
     public int getZoomPercent() {
         return prefs.getInt(KEY_ZOOM_PERCENT, 100);
     }
@@ -125,8 +90,6 @@ public final class PrefsManager {
     public void setZoomPercent(int percent) {
         prefs.edit().putInt(KEY_ZOOM_PERCENT, percent).apply();
     }
-
-    // System
 
     public boolean isSystemBarVisible() {
         return getBoolean(KEY_SHOW_SYSTEM_BAR, true);
@@ -143,8 +106,6 @@ public final class PrefsManager {
     public void setKeepScreenAwake(boolean value) {
         setBoolean(KEY_KEEP_SCREEN_AWAKE, value);
     }
-
-    // List
 
     public String getSortStyle() {
         return prefs.getString(KEY_SORT_STYLE, SORT_AZ);
@@ -170,8 +131,6 @@ public final class PrefsManager {
         setBoolean(KEY_RESPECT_NOMEDIA, value);
     }
 
-    // Audio formats
-
     public String[] allSupportedAudioFormats() {
         return appContext.getResources().getStringArray(R.array.supported_audio_formats);
     }
@@ -196,7 +155,6 @@ public final class PrefsManager {
         return FORMAT_KEY_PREFIX + format.toLowerCase(Locale.ROOT);
     }
 
-    // Folders
 
     public Set<String> getDisabledFolders() {
         return splitLines(prefs.getString(KEY_DISABLED_FOLDERS, ""));
@@ -206,7 +164,6 @@ public final class PrefsManager {
         prefs.edit().putString(KEY_DISABLED_FOLDERS, joinLines(folders)).apply();
     }
 
-    /** Every folder the last scan found music in, including the ones switched off. */
     public Set<String> getAllFolders() {
         return splitLines(prefs.getString(KEY_ALL_FOLDERS, ""));
     }
@@ -234,8 +191,6 @@ public final class PrefsManager {
         }
         return sb.toString();
     }
-
-    // Generic
 
     public boolean getBoolean(String key, boolean defaultValue) {
         return prefs.getBoolean(key, defaultValue);

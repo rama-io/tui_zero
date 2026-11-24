@@ -15,7 +15,6 @@ import com.rama.tui_zero.managers.PrefsManager;
 import com.rama.tui_zero.objects.Themes;
 import com.rama.tui_zero.objects.Track;
 
-/** The library: a search field over the list of tracks. The player bar below it lives in the main activity. */
 public class PlaylistPage implements Page {
     private final Context context;
     private final ListView list;
@@ -75,10 +74,8 @@ public class PlaylistPage implements Page {
         lastScrolledTo = null;
     }
 
-    /** Redraws the rows and follows the playing track. */
     public void refresh(Track current) {
         adapter.notifyDataSetChanged();
-        // Only follow the playing track when it changes, so scrolling the list by hand is not undone.
         if (current != null && !current.equals(lastScrolledTo)) {
             lastScrolledTo = current;
             int pos = adapter.positionOf(current);

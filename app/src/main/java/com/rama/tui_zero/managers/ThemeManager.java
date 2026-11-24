@@ -50,7 +50,6 @@ public final class ThemeManager {
         }
     }
 
-    /** Picks a new random accent, never the same one twice in a row. */
     public static void roll(Context context) {
         PrefsManager prefs = PrefsManager.getInstance(context);
         List<String> pool = Themes.accentIds();

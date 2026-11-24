@@ -3,12 +3,6 @@ package com.rama.tui_zero.helpers;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * A tiny expression parser. Supports + - * / ^, parentheses, implicit multiplication (2$t, 3($t+1), $t sin $t),
- * the constants pi and e, the usual one-argument functions, and counters written as $name.
- * Trigonometry works in radians.
- * Plain Java on purpose (no java.util.function) so it runs on API 21 without desugaring.
- */
 public final class Formula {
     public static final class FormulaException extends Exception {
         public FormulaException(String message) {
@@ -56,12 +50,10 @@ public final class Formula {
         this.root = root;
     }
 
-    /** vars holds one value per name given to parse(), in the same order. */
     public double eval(double[] vars) {
         return root.eval(vars);
     }
 
-    /** True for a name usable as $name: a letter or underscore, then letters, digits or underscores. */
     public static boolean isValidName(String name) {
         if (name == null || name.isEmpty()) return false;
         for (int i = 0; i < name.length(); i++) {
@@ -72,7 +64,6 @@ public final class Formula {
         return true;
     }
 
-    /** variables are the counter names that $name may refer to. */
     public static Formula parse(String text, String[] variables) throws FormulaException {
         String source = text == null ? "" : text.trim();
         source = stripPrefix(source);
@@ -80,14 +71,12 @@ public final class Formula {
         return new Parser(tokenize(source), variables).parseAll();
     }
 
-    /** Accepts "x = ..." and "y = ..." as well as a bare expression. */
     private static String stripPrefix(String s) {
         String compact = s.replace(" ", "").toLowerCase();
-        if (compact.startsWith("y=") || compact.startsWith("x=")) return s.substring(s.indexOf('=') + 1).trim();
+        if (compact.startsWith("y=") || compact.startsWith("x="))
+            return s.substring(s.indexOf('=') + 1).trim();
         return s;
     }
-
-    // Tokenizer
 
     private static List<Token> tokenize(String s) throws FormulaException {
         List<Token> out = new ArrayList<Token>();
@@ -107,7 +96,8 @@ public final class Formula {
             } else if (c == '$') {
                 int start = i++;
                 int nameStart = i;
-                while (i < s.length() && (isDigit(s.charAt(i)) || s.charAt(i) == '_' || (s.charAt(i) < 128 && Character.isLetter(s.charAt(i))))) i++;
+                while (i < s.length() && (isDigit(s.charAt(i)) || s.charAt(i) == '_' || (s.charAt(i) < 128 && Character.isLetter(s.charAt(i)))))
+                    i++;
                 if (i == nameStart) throw new FormulaException("'$' needs a counter name");
                 out.add(new Token(VAR, s.substring(nameStart, i), 0, start));
             } else if (Character.isLetter(c)) {
@@ -147,7 +137,6 @@ public final class Formula {
         return "+-*/^()".contains(op);
     }
 
-    /** "xsin" -> x, sin. Greedy longest match, so "exp" is a function and "ex" is e * x. */
     private static void splitNames(String run, int pos, List<Token> out) throws FormulaException {
         int i = 0;
         while (i < run.length()) {
@@ -157,19 +146,20 @@ public final class Formula {
                 i++;
             } else {
                 for (String name : FUNCTION_NAMES) {
-                    if (run.startsWith(name, i) && (match == null || name.length() > match.length())) match = name;
+                    if (run.startsWith(name, i) && (match == null || name.length() > match.length()))
+                        match = name;
                 }
                 for (String name : CONSTANT_NAMES) {
-                    if (run.startsWith(name, i) && (match == null || name.length() > match.length())) match = name;
+                    if (run.startsWith(name, i) && (match == null || name.length() > match.length()))
+                        match = name;
                 }
-                if (match == null) throw new FormulaException("unknown name '" + run.substring(i) + "'");
+                if (match == null)
+                    throw new FormulaException("unknown name '" + run.substring(i) + "'");
                 i += match.length();
             }
             out.add(new Token(NAME, match, 0, pos));
         }
     }
-
-    // Parser
 
     private static final class Parser {
         private final List<Token> tokens;
@@ -250,7 +240,6 @@ public final class Formula {
             }
         }
 
-        /** -x^2 is -(x^2), so the sign binds looser than the power. */
         private Node parseUnary() throws FormulaException {
             if (peekOp("-")) {
                 index++;
@@ -268,7 +257,6 @@ public final class Formula {
             return parsePower();
         }
 
-        /** Right associative: 2^3^2 is 2^(3^2), and 2^-x works because the exponent is a unary. */
         private Node parsePower() throws FormulaException {
             final Node base = parsePrimary();
             if (peekOp("^")) {
@@ -341,8 +329,9 @@ public final class Formula {
                 arg = parseExpr();
                 expectClose();
             } else {
-                if (!startsPrimary()) throw new FormulaException("'" + name + "' needs an argument");
-                arg = parsePower(); // "sin x^2" is sin(x^2)
+                if (!startsPrimary())
+                    throw new FormulaException("'" + name + "' needs an argument");
+                arg = parsePower();
             }
             return new Node() {
                 public double eval(double[] v) {

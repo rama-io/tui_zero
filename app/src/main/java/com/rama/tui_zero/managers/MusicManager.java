@@ -47,10 +47,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-/**
- * Library scan + playback queue + the MediaPlayer. Everything except the scan itself runs on the
- * main thread. It lives as long as the process, which MediaPlaybackService keeps alive.
- */
 public final class MusicManager {
     public interface Callback {
         void onComplete(boolean success);
@@ -60,8 +56,6 @@ public final class MusicManager {
         void onPlaybackError(Track track);
     }
 
-    // The wake lock is only a backstop: it is refreshed on every track start/resume and released
-    // on pause/stop, so it can never outlive the current track by more than this.
     private static final long WAKE_LOCK_MARGIN_MS = 5 * 60 * 1000L;
 
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
@@ -88,15 +82,12 @@ public final class MusicManager {
     private static Runnable onNotificationChanged;
     private static ErrorListener onPlaybackError;
 
-    // loadTracks() bookkeeping (main thread only)
     private static final List<Callback> waiting = new ArrayList<>();
     private static boolean scanning;
     private static boolean rescan;
 
     private MusicManager() {
     }
-
-    // region Listeners
 
     public static void setOnStateChanged(Runnable listener) {
         onStateChanged = listener;
@@ -115,10 +106,6 @@ public final class MusicManager {
         if (onStateChanged != null) onStateChanged.run();
         if (onNotificationChanged != null) onNotificationChanged.run();
     }
-
-    // endregion
-
-    // region State
 
     public static List<Track> getTracks() {
         return tracks;
@@ -143,10 +130,6 @@ public final class MusicManager {
     public static void setRepeat(boolean value) {
         repeat = value;
     }
-
-    // endregion
-
-    // region Media session
 
     public static void init(Context context) {
         appContext = context.getApplicationContext();
@@ -220,10 +203,6 @@ public final class MusicManager {
                 .build());
     }
 
-    // endregion
-
-    // region Keep-alive
-
     private static void setPlaying(boolean value) {
         playing = value;
         if (value) acquireWakeLock();
@@ -245,7 +224,6 @@ public final class MusicManager {
             }
             wakeLock.acquire(duration + WAKE_LOCK_MARGIN_MS);
         } catch (RuntimeException ignored) {
-            // No WAKE_LOCK permission or no PowerManager: playback itself still works.
         }
     }
 
@@ -255,10 +233,6 @@ public final class MusicManager {
         } catch (RuntimeException ignored) {
         }
     }
-
-    // endregion
-
-    // region Audio focus
 
     private static final AudioManager.OnAudioFocusChangeListener FOCUS_LISTENER = focus -> {
         if (focus == AudioManager.AUDIOFOCUS_LOSS) {
@@ -314,29 +288,16 @@ public final class MusicManager {
         }
     }
 
-    // endregion
-
-    // region Permissions
-
     public static boolean hasPermission(Context context) {
         if (context == null) return false;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true;
 
-        // Android 11+: MANAGE_EXTERNAL_STORAGE is what lets us list arbitrary folders and the SD card.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             return Environment.isExternalStorageManager();
         }
         return context.checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED;
     }
 
-    // endregion
-
-    // region Library
-
-    /**
-     * Rescans storage. Calls made while a scan is running are folded into one follow-up scan, so
-     * toggling several settings in a row does not walk the disk several times.
-     */
     public static void loadTracks(Context context, Callback callback) {
         if (!hasPermission(context)) {
             if (callback != null) callback.onComplete(false);
@@ -362,7 +323,6 @@ public final class MusicManager {
             try {
                 result = scan(ctx);
             } catch (RuntimeException e) {
-                // Leave the previous library in place.
             }
             final List<Track> scanned = result;
             MAIN.post(() -> {
@@ -390,12 +350,10 @@ public final class MusicManager {
         boolean keepTogether = prefs.isKeepTogether();
         Set<String> formats = prefs.getEnabledAudioFormats();
 
-        // Android 10: scoped storage blocks File.listFiles() even with READ_EXTERNAL_STORAGE.
         List<Track> raw = Build.VERSION.SDK_INT == Build.VERSION_CODES.Q
                 ? scanViaMediaStore(ctx, formats)
                 : syncTracks(ctx, getStorageRoots(ctx), formats, prefs.isRespectNomedia());
 
-        // Remember every folder before filtering so Settings can still list the disabled ones.
         Set<String> folders = new TreeSet<>();
         for (Track t : raw) {
             if (t.file.getParent() != null) folders.add(t.file.getParent());
@@ -420,7 +378,6 @@ public final class MusicManager {
         if (onStateChanged != null) onStateChanged.run();
     }
 
-    /** Sort by title (a-z / z-a), optionally keeping files of the same folder together. */
     public static List<Track> sortTracks(List<Track> source, String sortStyle, boolean keepTogether) {
         final boolean descending = PrefsManager.SORT_ZA.equals(sortStyle);
         final Comparator<String> text = (a, b) -> {
@@ -477,7 +434,8 @@ public final class MusicManager {
                 String path = cursor.getString(dataCol);
                 if (path == null) continue;
                 File file = new File(path);
-                if (!allowedFormats.contains(Track.extensionOf(file).toLowerCase(Locale.ROOT))) continue;
+                if (!allowedFormats.contains(Track.extensionOf(file).toLowerCase(Locale.ROOT)))
+                    continue;
                 long duration = cursor.getLong(durationCol);
                 if (duration <= 0) continue;
                 android.net.Uri uri = ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, cursor.getLong(idCol));
@@ -486,7 +444,8 @@ public final class MusicManager {
                 String msTitle = cursor.getString(titleCol);
                 String msArtist = cursor.getString(artistCol);
                 if (msTitle != null && msTitle.trim().length() == 0) msTitle = null;
-                if (msArtist != null && (msArtist.trim().length() == 0 || msArtist.equals("<unknown>"))) msArtist = null;
+                if (msArtist != null && (msArtist.trim().length() == 0 || msArtist.equals("<unknown>")))
+                    msArtist = null;
                 List<String> artists = msArtist != null ? Collections.singletonList(msArtist) : base.artists;
                 results.add(base.withMediaStore(msTitle != null ? msTitle : base.title, artists, uri, duration));
             }
@@ -502,8 +461,6 @@ public final class MusicManager {
         File internal = Environment.getExternalStorageDirectory();
         if (internal.exists()) roots.add(internal);
 
-        // SD cards and other volumes: walk up from the app-specific dir
-        // (/storage/<id>/Android/data/<pkg>/files, 4 levels up = volume root).
         File[] appDirs = context.getExternalFilesDirs(null);
         if (appDirs != null) {
             for (File dir : appDirs) {
@@ -521,7 +478,6 @@ public final class MusicManager {
         return usable;
     }
 
-    /** Returns the duration in ms, or -1 when the file has no audio this device can decode. */
     private static long probeDuration(File file) {
         MediaExtractor extractor = new MediaExtractor();
         try {
@@ -535,7 +491,6 @@ public final class MusicManager {
                 try {
                     durationUs = format.getLong(MediaFormat.KEY_DURATION);
                 } catch (Exception e) {
-                    // Not every format carries a duration.
                 }
                 if (new MediaCodecList(MediaCodecList.REGULAR_CODECS).findDecoderForFormat(format) != null) {
                     decodable = true;
@@ -562,10 +517,8 @@ public final class MusicManager {
         Set<String> visited = new HashSet<>();
         while (!stack.isEmpty()) {
             File dir = stack.removeLast();
-            // Skip Android system directories (permission errors, nothing to play).
             if (dir.getName().equals("Android")) continue;
             if (respectNomedia && new File(dir, ".nomedia").exists()) continue;
-            // Two storage roots can overlap (internal storage and its own mount).
             if (!visited.add(canonical(dir))) continue;
 
             File[] children = dir.listFiles();
@@ -575,12 +528,12 @@ public final class MusicManager {
                     stack.addLast(child);
                     continue;
                 }
-                if (!child.isFile() || !allowedFormats.contains(Track.extensionOf(child).toLowerCase(Locale.ROOT))) continue;
+                if (!child.isFile() || !allowedFormats.contains(Track.extensionOf(child).toLowerCase(Locale.ROOT)))
+                    continue;
 
                 String path = child.getAbsolutePath();
                 TrackCache.Entry entry = cached.get(path);
                 if (entry == null || !entry.matches(child)) {
-                    // New or changed file: parse its name and probe its duration once.
                     entry = TrackCache.Entry.from(child, Track.fromFile(child), probeDuration(child));
                     dirty = true;
                 }
@@ -589,8 +542,6 @@ public final class MusicManager {
             }
         }
 
-        // Files that disappeared since the last scan are dropped from the cache too.
-        // (Files under folders that are merely unreadable right now are dropped as well; they come back on the next scan.)
         if (dirty || current.size() != cached.size()) cache.save(current);
         return result;
     }
@@ -603,10 +554,6 @@ public final class MusicManager {
         }
     }
 
-    // endregion
-
-    // region Playback
-
     public static void play(int index) {
         if (appContext == null || tracks.isEmpty() || index < 0 || index >= tracks.size()) return;
         currentIndex = index;
@@ -617,11 +564,9 @@ public final class MusicManager {
 
         MediaPlayer p = new MediaPlayer();
         try {
-            // Keeps the CPU awake while this player is playing (needs WAKE_LOCK).
             p.setWakeMode(appContext, PowerManager.PARTIAL_WAKE_LOCK);
             p.setAudioAttributes(audioAttributes());
             if (track.contentUri != null) {
-                // Android 10: raw file paths are blocked by scoped storage, go through the content:// URI.
                 ParcelFileDescriptor pfd = appContext.getContentResolver().openFileDescriptor(track.contentUri, "r");
                 if (pfd == null) throw new IOException("Could not open " + track.contentUri);
                 try {
@@ -733,7 +678,6 @@ public final class MusicManager {
         updatePlaybackState();
     }
 
-    /** 0..1, or -1 when nothing is loaded. */
     public static float getProgress() {
         MediaPlayer p = player;
         if (p == null) return -1f;
@@ -752,13 +696,11 @@ public final class MusicManager {
         } else if (currentIndex < tracks.size() - 1) {
             play(currentIndex + 1);
         } else {
-            // End of the list: show it as stopped instead of "playing" forever.
             setPlaying(false);
             notifyChanged();
         }
     }
 
-    /** Stops playback and lets go of audio focus. The queue stays, play starts the track over. */
     public static void release() {
         pausedByFocusLoss = false;
         releasePlayer();
@@ -767,7 +709,6 @@ public final class MusicManager {
         notifyChanged();
     }
 
-    /** Called when the service goes away: also drops the media session. */
     public static void shutdown() {
         release();
         if (mediaSession != null) {
@@ -775,10 +716,6 @@ public final class MusicManager {
             mediaSession = null;
         }
     }
-
-    // endregion
-
-    // region Queue
 
     public static void setTracks(List<Track> newTracks, int index) {
         tracks = newTracks;
@@ -799,7 +736,6 @@ public final class MusicManager {
         List<Track> shuffled = new ArrayList<>(tracks.size());
 
         if (keepTogether) {
-            // Shuffle whole folders, keep the order inside each one; the playing folder goes first.
             Map<String, List<Track>> groups = new LinkedHashMap<>();
             for (Track t : tracks) {
                 List<Track> g = groups.get(t.folder());
@@ -814,7 +750,8 @@ public final class MusicManager {
             String currentFolder = current == null ? null : current.folder();
             List<Track> rest = new ArrayList<>();
             for (List<Track> g : order) {
-                if (currentFolder != null && g.get(0).folder().equals(currentFolder)) shuffled.addAll(g);
+                if (currentFolder != null && g.get(0).folder().equals(currentFolder))
+                    shuffled.addAll(g);
                 else rest.addAll(g);
             }
             shuffled.addAll(rest);
@@ -830,6 +767,4 @@ public final class MusicManager {
         currentIndex = current == null ? 0 : Math.max(0, tracks.indexOf(current));
         if (onStateChanged != null) onStateChanged.run();
     }
-
-    // endregion
 }

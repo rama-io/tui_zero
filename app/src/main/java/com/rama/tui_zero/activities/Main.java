@@ -150,7 +150,7 @@ public class Main extends BaseActivity {
         super.onResume();
         ThemeManager.rollIfRandom(this);
         refreshTheme();
-        pages[currentPage].onShow(); // e.g. the visualizer reloads what Settings changed
+        pages[currentPage].onShow();
         refreshUi();
         handler.removeCallbacks(ticker);
         handler.post(ticker);
@@ -179,7 +179,6 @@ public class Main extends BaseActivity {
         }
         MusicManager.setOnStateChanged(null);
         MusicManager.setOnPlaybackError(null);
-        // The service is intentionally left running: playback must survive the activity.
         super.onDestroy();
     }
 
@@ -257,13 +256,11 @@ public class Main extends BaseActivity {
         for (int i = 0; i < pageViews.length; i++) {
             pageViews[i].setVisibility(i == page ? View.VISIBLE : View.GONE);
         }
-        // The player (now playing bar and buttons) belongs to the playlist and the visualizer, not to Settings.
         playerControls.setVisibility(page == WdNavbar.SETTINGS ? View.GONE : View.VISIBLE);
         pages[page].onShow();
         refreshTheme();
     }
 
-    /** Re-applies zoom, theme and the navbar highlight, then lets the pages that draw by themselves follow. */
     private void refreshTheme() {
         ZoomManager.apply(this, root);
         ThemeManager.applyTheme(this, root);

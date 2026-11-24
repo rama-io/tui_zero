@@ -45,16 +45,14 @@ public final class Themes {
     private Themes() {
     }
 
-    /** A Catppuccin flavor: everything except the accent. */
     public static final class Flavor {
         public final String id;
         public final String label;
         public final boolean light;
         final int text, base, mantle, crust, surface0, surface1, disabled, border;
-        final int[] accents; // same order as ACCENT_IDS, null for a mono flavor
-        final Palette fixed; // the one palette of a mono flavor, null otherwise
+        final int[] accents;
+        final Palette fixed;
 
-        /** A mono flavor: one fixed palette, no accent to pick. */
         Flavor(String id, String label, boolean light, Palette fixed) {
             this.id = id;
             this.label = label;
@@ -97,9 +95,6 @@ public final class Themes {
 
     private static final String[] ACCENT_IDS = {"rosewater", "flamingo", "pink", "mauve", "red", "maroon", "peach", "yellow", "green", "teal", "sky", "sapphire", "blue", "lavender"};
     private static final String[] ACCENT_LABELS = {"Rosewater", "Flamingo", "Pink", "Mauve", "Red", "Maroon", "Peach", "Yellow", "Green", "Teal", "Sky", "Sapphire", "Blue", "Lavender"};
-    // Catppuccin values per accent, in ACCENT_IDS order (the order of the Catppuccin website). The error / success / warning roles reuse
-    // red / green / yellow shifted by one in the blue channel, so a color on screen always maps back to exactly one
-    // role when the theme changes (the color map in ThemeManager is keyed by color value).
     private static final int RED = 4, GREEN = 8, YELLOW = 7;
 
     private static final Flavor[] FLAVORS = {
@@ -151,10 +146,6 @@ public final class Themes {
         return (color & 0xFFFFFF00) | b;
     }
 
-    /**
-     * The tint behind the "now playing" progress. Dark flavors: the accent's hue, deep and saturated.
-     * Light flavor: the accent's hue as a soft tint, so the accent colored text on top stays readable.
-     */
     static int accentDark(int accent, boolean light) {
         float r = ((accent >> 16) & 0xFF) / 255f, g = ((accent >> 8) & 0xFF) / 255f, b = (accent & 0xFF) / 255f;
         float max = Math.max(r, Math.max(g, b)), min = Math.min(r, Math.min(g, b)), d = max - min;
@@ -166,18 +157,41 @@ public final class Themes {
         return hsv(h, light ? 0.30f : 0.93f, light ? 0.85f : 0.32f);
     }
 
-    /** h in sextants (0..6). */
     private static int hsv(float h, float s, float v) {
         float c = v * s, x = c * (1 - Math.abs(h % 2 - 1)), m = v - c;
         float r, g, b;
         int sector = (int) h % 6;
         switch (sector) {
-            case 0: r = c; g = x; b = 0; break;
-            case 1: r = x; g = c; b = 0; break;
-            case 2: r = 0; g = c; b = x; break;
-            case 3: r = 0; g = x; b = c; break;
-            case 4: r = x; g = 0; b = c; break;
-            default: r = c; g = 0; b = x; break;
+            case 0:
+                r = c;
+                g = x;
+                b = 0;
+                break;
+            case 1:
+                r = x;
+                g = c;
+                b = 0;
+                break;
+            case 2:
+                r = 0;
+                g = c;
+                b = x;
+                break;
+            case 3:
+                r = 0;
+                g = x;
+                b = c;
+                break;
+            case 4:
+                r = x;
+                g = 0;
+                b = c;
+                break;
+            default:
+                r = c;
+                g = 0;
+                b = x;
+                break;
         }
         return 0xFF000000 | (Math.round((r + m) * 255) << 16) | (Math.round((g + m) * 255) << 8) | Math.round((b + m) * 255);
     }
@@ -223,7 +237,8 @@ public final class Themes {
 
     public static List<Accent> accents() {
         List<Accent> list = new ArrayList<Accent>();
-        for (int i = 0; i < ACCENT_IDS.length; i++) list.add(new Accent(ACCENT_IDS[i], ACCENT_LABELS[i]));
+        for (int i = 0; i < ACCENT_IDS.length; i++)
+            list.add(new Accent(ACCENT_IDS[i], ACCENT_LABELS[i]));
         return list;
     }
 
@@ -232,7 +247,6 @@ public final class Themes {
         return false;
     }
 
-    /** True for a real accent id; "random" is not one, it is resolved to one by ThemeManager. */
     public static boolean isAccent(String id) {
         for (String a : ACCENT_IDS) if (a.equals(id)) return true;
         return false;
@@ -244,23 +258,16 @@ public final class Themes {
         return list;
     }
 
-    /** Mono flavors have one fixed palette, so the accent setting is hidden and ignored for them. */
     public static boolean hasAccents(String flavorId) {
         for (Flavor f : FLAVORS) if (f.id.equals(flavorId)) return f.fixed == null;
         return true;
     }
 
-    /** Falls back to Mocha / Mauve for ids it does not know. Mono flavors ignore the accent. */
     public static Palette palette(String flavorId, String accentId) {
         Palette p = hasAccents(flavorId) ? PALETTES.get(key(flavorId, accentId)) : PALETTES.get(flavorId);
         return p != null ? p : PALETTES.get(key(DEFAULT_FLAVOR, "mauve"));
     }
 
-    /**
-     * The color of the line drawn for a formula. A formula remembers an accent id (say "teal"), which resolves
-     * against the current flavor so lines follow the theme. Mono themes have no accents, so lines there are told
-     * apart by shade instead: the text color mixed a little further towards the background for each index.
-     */
     public static int lineColor(Palette palette, String accentId, int index) {
         int split = palette.id.indexOf(':');
         String flavorId = split < 0 ? palette.id : palette.id.substring(0, split);
@@ -285,7 +292,6 @@ public final class Themes {
         return 0xFF000000 | (r << 16) | (g << 8) | bl;
     }
 
-    /** Every flavor with every accent. ThemeManager uses it to map colors from any theme to the current one. */
     public static List<Palette> all() {
         return new ArrayList<Palette>(PALETTES.values());
     }

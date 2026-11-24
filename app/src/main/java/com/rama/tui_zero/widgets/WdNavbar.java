@@ -15,7 +15,6 @@ import com.rama.tui_zero.objects.Themes;
 public class WdNavbar extends LinearLayout {
     public static final int PLAYLIST = 0;
     public static final int VISUALIZER = 1;
-    /** Not a page: it opens the settings activity, so it is never highlighted. */
     public static final int SETTINGS = 2;
 
     public interface OnNavigateListener {
@@ -51,7 +50,6 @@ public class WdNavbar extends LinearLayout {
         this.listener = listener;
     }
 
-    /** The active page gets the accent background and an inverted icon. Call after the theme was applied. */
     public void setActive(int page, Themes.Palette palette) {
         for (int i = 0; i < buttons.length; i++) {
             boolean active = i == page;

@@ -6,19 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-/**
- * What the visualizer draws: counters (a name that counts from one number to another) and formulas that give the
- * X and Y of a point in terms of those counters, e.g. counter t from 1 to 100, x = cos($t), y = sin($t).
- *
- * Every counter has its own delay, so it runs on its own clock. What is on screen is every combination of counter
- * values where each counter is: without a delay, at all of its values at once; with a delay and "keep trail", at the
- * values it has gone through so far (so a line grows, and with alternate shrinks on the way back); with a delay and no
- * trail, only at its current value (so a shape moves instead of piling up). Example: a circle t = 1..360 without delay and
- * a radius r = 0..10 with a delay and no trail is a circle that grows.
- *
- * The fields keep the text as typed, so editing never reformats what the person is in the middle of writing.
- * Plain Java, no Android classes.
- */
 public final class Visualizer {
     public static final int MAX_POINTS = 50000;
 
@@ -26,20 +13,11 @@ public final class Visualizer {
         public String alias;
         public String from;
         public String to;
-        /** Keeps going after reaching "to" instead of stopping there. */
         public boolean infinite;
-        /** When infinite: true goes back down (1 to 100, then 100 to 1), false starts over (1 to 100, then 1 again). */
         public boolean alternate;
-        /** A turned off counter is ignored, as if it was not there. */
         public boolean enabled = true;
-        /** Only whether its block is folded into its title in Settings. */
         public boolean collapsed;
-        /**
-         * For a counter with a delay: true keeps what it already went through on screen (the line grows, and with
-         * alternate shrinks on the way back); false shows only its current value, so the shape moves instead of piling up.
-         */
         public boolean keepTrail = true;
-        /** Milliseconds between two steps of this counter. Empty or 0: no animation, it shows its last value. */
         public String delay = "";
 
         public Counter(String alias, String from, String to) {
@@ -57,7 +35,6 @@ public final class Visualizer {
     public static final class FormulaDef {
         public String x;
         public String y;
-        /** The accent id its line is drawn with. Random and different per formula; see assignMissingColors. */
         public String color = "";
         public boolean enabled = true;
         public boolean collapsed;
@@ -73,12 +50,10 @@ public final class Visualizer {
         }
     }
 
-    /** The points of one formula, one per step of a pass. */
     public static final class Series {
         public final double[] xs;
         public final double[] ys;
         public final String color;
-        /** Position of the formula in the list, so a line and its title agree on the color even if a formula before it is turned off. */
         public final int formulaIndex;
 
         Series(double[] xs, double[] ys, String color, int formulaIndex) {
@@ -89,7 +64,6 @@ public final class Visualizer {
         }
     }
 
-    /** What is on screen at a given time, worked out from the elapsed time alone so there is no state to keep in sync. */
     public static final class Animation {
         final int[] counts;
         final long[] delays;
@@ -118,7 +92,6 @@ public final class Visualizer {
             return counts[i] > 1 && delays[i] > 0;
         }
 
-        /** Index of the value counter i is showing after elapsedMs (its last one when it has no delay). */
         int indexOf(int i, long elapsedMs) {
             int n = counts[i];
             if (n <= 1 || delays[i] <= 0) return n - 1 < 0 ? 0 : n - 1;
@@ -130,7 +103,6 @@ public final class Visualizer {
             return (int) (r < n ? r : period - r);
         }
 
-        /** First and last value index counter i has on screen. */
         private int low(int i, long elapsedMs) {
             if (!animated(i) || trail[i]) return 0;
             return indexOf(i, elapsedMs);
@@ -141,22 +113,17 @@ public final class Visualizer {
             return indexOf(i, elapsedMs);
         }
 
-        /**
-         * The points on screen after elapsedMs, as pairs {from, to} (to excluded) of positions in a series. Each pair is
-         * one stretch of line; the gaps between pairs are not joined.
-         */
         public int[] ranges(long elapsedMs) {
             int n = counts.length;
             int[] lo = new int[n];
             int[] hi = new int[n];
-            int k = -1; // the last counter that is not showing all of its values
+            int k = -1;
             for (int i = 0; i < n; i++) {
                 lo[i] = low(i, elapsedMs);
                 hi[i] = high(i, elapsedMs);
                 if (lo[i] != 0 || hi[i] != counts[i] - 1) k = i;
             }
             if (k < 0) return new int[]{0, totalPoints};
-            // The counters before k pick a stretch each; counter k's values and everything after it are one stretch.
             int[] at = new int[k];
             long blocks = 1;
             for (int i = 0; i < k; i++) {
@@ -169,7 +136,7 @@ public final class Visualizer {
                 for (int i = 0; i < k; i++) base += at[i] * strides[i];
                 out[2 * b] = (int) (base + lo[k] * strides[k]);
                 out[2 * b + 1] = (int) (base + (hi[k] + 1) * strides[k]);
-                for (int i = k - 1; i >= 0; i--) { // odometer over the counters before k
+                for (int i = k - 1; i >= 0; i--) {
                     if (++at[i] <= hi[i]) break;
                     at[i] = lo[i];
                 }
@@ -177,7 +144,6 @@ public final class Visualizer {
             return out;
         }
 
-        /** How many points are on screen after elapsedMs. */
         public int visiblePoints(long elapsedMs) {
             int[] r = ranges(elapsedMs);
             int total = 0;
@@ -185,7 +151,6 @@ public final class Visualizer {
             return total;
         }
 
-        /** False once nothing will change any more, so the screen can stop redrawing. */
         public boolean isRunning(long elapsedMs) {
             for (int i = 0; i < counts.length; i++) {
                 if (!animated(i)) continue;
@@ -197,7 +162,6 @@ public final class Visualizer {
 
     public static final class Result {
         public final List<Series> series = new ArrayList<Series>();
-        /** Null when everything was valid. */
         public String error;
         public int points;
         public Animation animation;
@@ -206,16 +170,13 @@ public final class Visualizer {
     public final List<Counter> counters = new ArrayList<Counter>();
     public final List<FormulaDef> formulas = new ArrayList<FormulaDef>();
 
-    /** What a fresh install starts with, so the canvas is not empty. */
     public static Visualizer example() {
         Visualizer v = new Visualizer();
-        // 360 values: 0 would repeat the point of 360
         v.counters.add(new Counter("t", "1", "360", "10"));
         v.formulas.add(new FormulaDef("sin($t*pi/180)", "cos($t*pi/180)"));
         return v;
     }
 
-    /** A random accent id no other formula uses yet (any of them once all are taken). */
     public String pickColor(Random random) {
         List<String> free = Themes.accentIds();
         for (FormulaDef f : formulas) free.remove(f.color);
@@ -223,7 +184,6 @@ public final class Visualizer {
         return pool.get(random.nextInt(pool.size()));
     }
 
-    /** Gives a color to every formula that has none. Returns true if it changed anything. */
     public boolean assignMissingColors(Random random) {
         boolean changed = false;
         for (FormulaDef f : formulas) {
@@ -236,7 +196,6 @@ public final class Visualizer {
         return changed;
     }
 
-    /** Next free counter name: t, u, v, w, then c5, c6, ... */
     public String nextAlias() {
         String preferred = "tuvwsr";
         for (int i = 0; i < preferred.length(); i++) {
@@ -254,11 +213,6 @@ public final class Visualizer {
         return false;
     }
 
-    /**
-     * Evaluates every turned-on formula for every combination of values of the turned-on counters (the first counter is
-     * the outer loop). A counter steps by 1 from "from" towards "to", both included, so 1 to 100 gives 100 values.
-     * A formula that uses a turned off counter says so. Stops at the first problem and describes it in Result.error.
-     */
     public Result build() {
         Result result = new Result();
         List<Counter> active = new ArrayList<Counter>();
@@ -315,12 +269,11 @@ public final class Visualizer {
             alternate[i] = c.alternate;
             trail[i] = c.keepTrail;
         }
-        // Counters that show only their current value go outermost, so what is left of the combination (the counters
-        // that draw) stays together as one line whatever order the counters are listed in.
         int[] perm = new int[n];
         int at = 0;
         for (int i = 0; i < n; i++) if (counts[i] > 1 && delays[i] > 0 && !trail[i]) perm[at++] = i;
-        for (int i = 0; i < n; i++) if (!(counts[i] > 1 && delays[i] > 0 && !trail[i])) perm[at++] = i;
+        for (int i = 0; i < n; i++)
+            if (!(counts[i] > 1 && delays[i] > 0 && !trail[i])) perm[at++] = i;
         int[] pc = new int[n];
         long[] pd = new long[n];
         boolean[] pi = new boolean[n];
@@ -361,7 +314,7 @@ public final class Visualizer {
                 for (int j = 0; j < n; j++) vars[perm[j]] = values[perm[j]][index[j]];
                 xs[p] = fx.eval(vars);
                 ys[p] = fy.eval(vars);
-                for (int j = n - 1; j >= 0; j--) { // odometer: the last counter moves fastest
+                for (int j = n - 1; j >= 0; j--) {
                     if (++index[j] < counts[perm[j]]) break;
                     index[j] = 0;
                 }
@@ -372,7 +325,6 @@ public final class Visualizer {
         return result;
     }
 
-    /** "no counter named $t" is confusing when the counter exists but is turned off. */
     private static String explain(String message, List<String> off) {
         String prefix = "no counter named $";
         if (message.startsWith(prefix) && off.contains(message.substring(prefix.length()))) {
@@ -381,7 +333,6 @@ public final class Visualizer {
         return message;
     }
 
-    /** Empty or not a number means 0: no animation. */
     private static long parseDelay(String text) {
         try {
             return Math.max(0, Long.parseLong(text.trim()));
