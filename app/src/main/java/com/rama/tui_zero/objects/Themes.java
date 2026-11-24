@@ -256,6 +256,35 @@ public final class Themes {
         return p != null ? p : PALETTES.get(key(DEFAULT_FLAVOR, "mauve"));
     }
 
+    /**
+     * The color of the line drawn for a formula. A formula remembers an accent id (say "teal"), which resolves
+     * against the current flavor so lines follow the theme. Mono themes have no accents, so lines there are told
+     * apart by shade instead: the text color mixed a little further towards the background for each index.
+     */
+    public static int lineColor(Palette palette, String accentId, int index) {
+        int split = palette.id.indexOf(':');
+        String flavorId = split < 0 ? palette.id : palette.id.substring(0, split);
+        if (hasAccents(flavorId)) {
+            for (Flavor f : FLAVORS) {
+                if (!f.id.equals(flavorId)) continue;
+                for (int i = 0; i < ACCENT_IDS.length; i++) {
+                    if (ACCENT_IDS[i].equals(accentId)) return f.accents[i];
+                }
+                return f.accents[Math.abs(index) % ACCENT_IDS.length];
+            }
+        }
+        float[] towardsBase = {0f, 0.35f, 0.6f, 0.18f, 0.75f};
+        float t = towardsBase[Math.abs(index) % towardsBase.length];
+        return mix(palette.text, palette.base, t);
+    }
+
+    private static int mix(int a, int b, float t) {
+        int r = Math.round(((a >> 16) & 0xFF) * (1 - t) + ((b >> 16) & 0xFF) * t);
+        int g = Math.round(((a >> 8) & 0xFF) * (1 - t) + ((b >> 8) & 0xFF) * t);
+        int bl = Math.round((a & 0xFF) * (1 - t) + (b & 0xFF) * t);
+        return 0xFF000000 | (r << 16) | (g << 8) | bl;
+    }
+
     /** Every flavor with every accent. ThemeManager uses it to map colors from any theme to the current one. */
     public static List<Palette> all() {
         return new ArrayList<Palette>(PALETTES.values());

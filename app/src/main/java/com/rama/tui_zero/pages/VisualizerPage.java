@@ -26,7 +26,7 @@ public class VisualizerPage implements Page {
     @Override
     public void onShow() {
         Visualizer.Result result = VisualizerStore.load(context).build();
-        plot.setSeries(result.error == null ? result.series : null);
+        plot.setScene(result.error == null ? result : null); // starts the animation over
     }
 
     @Override

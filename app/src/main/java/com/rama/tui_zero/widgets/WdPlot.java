@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Typeface;
+import android.os.SystemClock;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -19,8 +20,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Draws the series of a Visualizer on a labelled grid. Static for now: the window is fitted around the points,
- * and both axes share one scale (a unit is as wide as it is tall). Pan and zoom would change cx, cy and scale.
+ * Draws the lines of a Visualizer on a labelled grid. The window is fitted around the complete lines and stays put
+ * while they animate, and both axes share one scale (a unit is as wide as it is tall). Pan and zoom would change
+ * cx, cy and scale.
+ *
+ * The animation needs no timer: while something is still moving, onDraw asks for the next frame, and a view that
+ * is hidden or scrolled away is not drawn, so it stops by itself and carries on when it is visible again.
  */
 public class WdPlot extends View {
     private static final double EMPTY_HALF_WIDTH = 10;
@@ -36,8 +41,13 @@ public class WdPlot extends View {
     private final float density;
 
     private int background = 0xFF11111B;
-    private int[] curveColors = {0xFFCBA6F7};
+    private Themes.Palette palette;
     private List<Visualizer.Series> series = new ArrayList<Visualizer.Series>();
+    private Visualizer.Animation animation;
+    private long startedAt;
+    // Window of the complete lines, worked out once per scene.
+    private boolean hasBounds;
+    private double cx, cy, spanX, spanY;
 
     public WdPlot(Context context) {
         this(context, null);
@@ -58,20 +68,43 @@ public class WdPlot extends View {
         applyLabelSize();
     }
 
-    public void setSeries(List<Visualizer.Series> series) {
-        this.series = series == null ? new ArrayList<Visualizer.Series>() : series;
+    /** Shows a built Visualizer and starts its animation from the beginning. Null clears the canvas. */
+    public void setScene(Visualizer.Result result) {
+        series = result == null ? new ArrayList<Visualizer.Series>() : result.series;
+        animation = result == null ? null : result.animation;
+        startedAt = SystemClock.uptimeMillis();
+        fitWindow();
         invalidate();
     }
 
     public void setPalette(Themes.Palette palette) {
+        this.palette = palette;
         background = palette.crust;
         gridPaint.setColor(palette.surface_0);
         axisPaint.setColor(palette.border);
         labelPaint.setColor(palette.disabled);
-        // One color per formula, cycling.
-        curveColors = new int[]{palette.accent, palette.success, palette.warning, palette.error, palette.text};
         applyLabelSize(); // called after every zoom change too, so the labels follow the app zoom
         invalidate();
+    }
+
+    private void fitWindow() {
+        double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+        for (Visualizer.Series s : series) {
+            for (int i = 0; i < s.xs.length; i++) {
+                if (!isFinite(s.xs[i]) || !isFinite(s.ys[i])) continue;
+                minX = Math.min(minX, s.xs[i]);
+                maxX = Math.max(maxX, s.xs[i]);
+                minY = Math.min(minY, s.ys[i]);
+                maxY = Math.max(maxY, s.ys[i]);
+            }
+        }
+        hasBounds = minX <= maxX;
+        if (hasBounds) {
+            cx = (minX + maxX) / 2;
+            cy = (minY + maxY) / 2;
+            spanX = maxX - minX;
+            spanY = maxY - minY;
+        }
     }
 
     private void applyLabelSize() {
@@ -85,22 +118,10 @@ public class WdPlot extends View {
         if (w <= 0 || h <= 0) return;
         canvas.drawColor(background);
 
-        // Fit the window around every finite point.
-        double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE, minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
-        for (Visualizer.Series s : series) {
-            for (int i = 0; i < s.xs.length; i++) {
-                if (!isFinite(s.xs[i]) || !isFinite(s.ys[i])) continue;
-                minX = Math.min(minX, s.xs[i]);
-                maxX = Math.max(maxX, s.xs[i]);
-                minY = Math.min(minY, s.ys[i]);
-                maxY = Math.max(maxY, s.ys[i]);
-            }
-        }
-        double cx = 0, cy = 0, scale = w / (2 * EMPTY_HALF_WIDTH);
-        if (minX <= maxX) {
-            cx = (minX + maxX) / 2;
-            cy = (minY + maxY) / 2;
-            double spanX = maxX - minX, spanY = maxY - minY;
+        double centerX = 0, centerY = 0, scale = w / (2 * EMPTY_HALF_WIDTH);
+        if (hasBounds) {
+            centerX = cx;
+            centerY = cy;
             if (spanX == 0 && spanY == 0) {
                 scale = Math.min(w, h) / 4.0; // a single point: show two units around it
             } else {
@@ -112,10 +133,15 @@ public class WdPlot extends View {
 
         double halfW = w / 2.0 / scale, halfH = h / 2.0 / scale;
         double step = niceStep(Math.max(halfW, halfH) * 2 / 8);
-        drawGrid(canvas, w, h, scale, cx, cy, halfW, halfH, step);
-        for (int i = 0; i < series.size(); i++) {
-            drawSeries(canvas, series.get(i), curveColors[i % curveColors.length], w, h, scale, cx, cy);
+        drawGrid(canvas, w, h, scale, centerX, centerY, halfW, halfH, step);
+
+        long elapsed = SystemClock.uptimeMillis() - startedAt;
+        int visible = animation == null ? Integer.MAX_VALUE : animation.visiblePoints(elapsed);
+        for (Visualizer.Series s : series) {
+            int color = palette != null ? Themes.lineColor(palette, s.color, s.formulaIndex) : 0xFFCBA6F7;
+            drawSeries(canvas, s, visible, color, w, h, scale, centerX, centerY);
         }
+        if (animation != null && animation.isRunning(elapsed)) postInvalidateOnAnimation();
     }
 
     private static boolean isFinite(double v) {
@@ -146,14 +172,18 @@ public class WdPlot extends View {
         if (originY >= 0 && originY <= h) canvas.drawLine(0, originY, w, originY, axisPaint);
     }
 
-    private void drawSeries(Canvas canvas, Visualizer.Series s, int color, int w, int h, double scale, double cx, double cy) {
+    /** Draws the first `visible` points joined by a line, with a larger marker on the newest one. */
+    private void drawSeries(Canvas canvas, Visualizer.Series s, int visible, int color, int w, int h, double scale, double cx, double cy) {
         curvePaint.setColor(color);
         dotPaint.setColor(color);
         path.reset();
         boolean penDown = false;
-        boolean dots = s.xs.length <= MAX_DOTS;
+        int count = Math.min(visible, s.xs.length);
+        boolean dots = count <= MAX_DOTS;
         float half = 2 * density;
-        for (int i = 0; i < s.xs.length; i++) {
+        float headX = 0, headY = 0;
+        boolean hasHead = false;
+        for (int i = 0; i < count; i++) {
             if (!isFinite(s.xs[i]) || !isFinite(s.ys[i])) {
                 penDown = false; // a gap: the formula had no value here
                 continue;
@@ -164,8 +194,15 @@ public class WdPlot extends View {
             else path.moveTo(px, py);
             penDown = true;
             if (dots) canvas.drawRect(px - half, py - half, px + half, py + half, dotPaint);
+            headX = px;
+            headY = py;
+            hasHead = true;
         }
         canvas.drawPath(path, curvePaint);
+        if (hasHead && count > 1) {
+            float big = half * 2.2f;
+            canvas.drawRect(headX - big, headY - big, headX + big, headY + big, dotPaint);
+        }
     }
 
     /** 1, 2 or 5 times a power of ten, at least as big as the wanted step. */

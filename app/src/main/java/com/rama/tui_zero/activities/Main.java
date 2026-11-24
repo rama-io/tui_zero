@@ -31,12 +31,12 @@ import com.rama.tui_zero.objects.Themes;
 import com.rama.tui_zero.objects.Track;
 import com.rama.tui_zero.pages.Page;
 import com.rama.tui_zero.pages.PlaylistPage;
+import com.rama.tui_zero.pages.SettingsPage;
 import com.rama.tui_zero.pages.VisualizerPage;
 import com.rama.tui_zero.widgets.WdNavbar;
 
 public class Main extends BaseActivity {
     private static final int REQ_MANAGE = 1;
-    private static final int REQ_SETTINGS = 2;
     private static final int REQ_PERMS = 3;
     private static final long TICK_MS = 500;
 
@@ -46,9 +46,10 @@ public class Main extends BaseActivity {
 
     private View root;
     private WdNavbar navbar;
-    private final View[] pageViews = new View[2];
-    private final Page[] pages = new Page[2];
+    private final View[] pageViews = new View[3];
+    private final Page[] pages = new Page[3];
     private PlaylistPage playlist;
+    private SettingsPage settings;
     private int currentPage = WdNavbar.PLAYLIST;
     private View progressBar;
     private View nowPlaying;
@@ -92,13 +93,24 @@ public class Main extends BaseActivity {
         playlist = new PlaylistPage(this, pageViews[WdNavbar.PLAYLIST]);
         pages[WdNavbar.PLAYLIST] = playlist;
         pages[WdNavbar.VISUALIZER] = new VisualizerPage(this, pageViews[WdNavbar.VISUALIZER]);
+        pageViews[WdNavbar.SETTINGS] = findViewById(R.id.page_settings);
+        settings = new SettingsPage(this, pageViews[WdNavbar.SETTINGS], new SettingsPage.Host() {
+            @Override
+            public void refreshTheme() {
+                Main.this.refreshTheme();
+            }
+
+            @Override
+            public void onLibrarySettingsChanged() {
+                playlist.clearFilter();
+                loadOrRequestTracks();
+            }
+        });
+        pages[WdNavbar.SETTINGS] = settings;
 
         navbar = findViewById(R.id.navbar);
         navbar.setOnNavigateListener(page -> {
-            if (page == WdNavbar.SETTINGS) {
-                startActivityForResult(new Intent(Main.this, Settings.class), REQ_SETTINGS);
-                overridePendingTransition(0, 0);
-            } else if (page != currentPage) {
+            if (page != currentPage) {
                 navigateTo(page);
             }
         });
@@ -148,6 +160,7 @@ public class Main extends BaseActivity {
     @Override
     protected void onPause() {
         handler.removeCallbacks(ticker);
+        settings.flush();
         super.onPause();
     }
 
@@ -204,22 +217,15 @@ public class Main extends BaseActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQ_MANAGE) {
             if (MusicManager.hasPermission(this)) loadOrRequestTracks();
-        } else if (requestCode == REQ_SETTINGS) {
-            // Settings has the navbar too: tapping a page there brings us back to that page.
-            if (data != null && data.hasExtra(Settings.EXTRA_PAGE)) {
-                int page = data.getIntExtra(Settings.EXTRA_PAGE, currentPage);
-                if (page >= 0 && page < pages.length && page != currentPage) navigateTo(page);
-            }
-            if (resultCode == RESULT_OK) {
-                playlist.clearFilter();
-                loadOrRequestTracks();
-            }
+        } else if (requestCode == SettingsPage.REQ_STORAGE) {
+            settings.onStorageResult();
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == SettingsPage.REQ_PERMS) settings.onPermissionsResult();
         if (MusicManager.hasPermission(this)) loadOrRequestTracks();
     }
 

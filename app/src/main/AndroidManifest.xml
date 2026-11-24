@@ -83,10 +83,6 @@
             android:name=".activities.About"
             android:exported="false" />
 
-        <activity
-            android:name=".activities.Settings"
-            android:exported="false" />
-
         <receiver
             android:name=".MediaButtonReceiver"
             android:exported="true">
