@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 
 import com.rama.tui_zero.R;
 import com.rama.tui_zero.objects.PrefTheme;
+import com.rama.tui_zero.objects.Themes;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -17,9 +18,10 @@ public final class PrefsManager {
     public static final String SORT_ZA = "za";
 
     private static final String PREFS_NAME = "tui_zero";
-
-    private static final String KEY_THEME = "settings:theme";
-    private static final String KEY_THEME_ROLLED_ID = "settings:theme_rolled_id";
+    private static final String KEY_FLAVOR = "settings:flavor";
+    private static final String KEY_ACCENT = "settings:accent";
+    private static final String KEY_ACCENT_ROLLED = "settings:accent_rolled";
+    private static final String KEY_VISUALIZER = "visualizer:setup";
     private static final String KEY_ZOOM_PERCENT = "settings:zoom_percent";
     private static final String KEY_SHOW_SYSTEM_BAR = "system:bar:visible";
     private static final String KEY_KEEP_SCREEN_AWAKE = "system:keep_screen_awake";
@@ -46,22 +48,39 @@ public final class PrefsManager {
         return instance;
     }
 
-    // Appearance
-
-    public String getTheme() {
-        return prefs.getString(KEY_THEME, PrefTheme.DEFAULT);
+    public String getVisualizerJson() {
+        return prefs.getString(KEY_VISUALIZER, null);
     }
 
-    public void setTheme(String themeId) {
-        prefs.edit().putString(KEY_THEME, themeId).apply();
+    public void setVisualizerJson(String json) {
+        prefs.edit().putString(KEY_VISUALIZER, json).apply();
     }
 
-    public String getRolledThemeId() {
-        return prefs.getString(KEY_THEME_ROLLED_ID, PrefTheme.CATPPUCCIN_MOCHA_MAUVE);
+    public String getFlavor() {
+        String id = prefs.getString(KEY_FLAVOR, PrefTheme.DEFAULT_FLAVOR);
+        return Themes.isFlavor(id) ? id : PrefTheme.DEFAULT_FLAVOR;
     }
 
-    public void setRolledTheme(String themeId) {
-        prefs.edit().putString(KEY_THEME_ROLLED_ID, themeId).apply();
+    public void setFlavor(String flavorId) {
+        prefs.edit().putString(KEY_FLAVOR, flavorId).apply();
+    }
+
+    public String getAccent() {
+        String id = prefs.getString(KEY_ACCENT, PrefTheme.DEFAULT_ACCENT);
+        return Themes.isAccent(id) || PrefTheme.ACCENT_RANDOM.equals(id) ? id : PrefTheme.DEFAULT_ACCENT;
+    }
+
+    public void setAccent(String accentId) {
+        prefs.edit().putString(KEY_ACCENT, accentId).apply();
+    }
+
+    public String getRolledAccent() {
+        String id = prefs.getString(KEY_ACCENT_ROLLED, "mauve");
+        return Themes.isAccent(id) ? id : "mauve";
+    }
+
+    public void setRolledAccent(String accentId) {
+        prefs.edit().putString(KEY_ACCENT_ROLLED, accentId).apply();
     }
 
     public int getZoomPercent() {
@@ -71,8 +90,6 @@ public final class PrefsManager {
     public void setZoomPercent(int percent) {
         prefs.edit().putInt(KEY_ZOOM_PERCENT, percent).apply();
     }
-
-    // System
 
     public boolean isSystemBarVisible() {
         return getBoolean(KEY_SHOW_SYSTEM_BAR, true);
@@ -89,8 +106,6 @@ public final class PrefsManager {
     public void setKeepScreenAwake(boolean value) {
         setBoolean(KEY_KEEP_SCREEN_AWAKE, value);
     }
-
-    // List
 
     public String getSortStyle() {
         return prefs.getString(KEY_SORT_STYLE, SORT_AZ);
@@ -116,8 +131,6 @@ public final class PrefsManager {
         setBoolean(KEY_RESPECT_NOMEDIA, value);
     }
 
-    // Audio formats
-
     public String[] allSupportedAudioFormats() {
         return appContext.getResources().getStringArray(R.array.supported_audio_formats);
     }
@@ -142,7 +155,6 @@ public final class PrefsManager {
         return FORMAT_KEY_PREFIX + format.toLowerCase(Locale.ROOT);
     }
 
-    // Folders
 
     public Set<String> getDisabledFolders() {
         return splitLines(prefs.getString(KEY_DISABLED_FOLDERS, ""));
@@ -152,7 +164,6 @@ public final class PrefsManager {
         prefs.edit().putString(KEY_DISABLED_FOLDERS, joinLines(folders)).apply();
     }
 
-    /** Every folder the last scan found music in, including the ones switched off. */
     public Set<String> getAllFolders() {
         return splitLines(prefs.getString(KEY_ALL_FOLDERS, ""));
     }
@@ -180,8 +191,6 @@ public final class PrefsManager {
         }
         return sb.toString();
     }
-
-    // Generic
 
     public boolean getBoolean(String key, boolean defaultValue) {
         return prefs.getBoolean(key, defaultValue);

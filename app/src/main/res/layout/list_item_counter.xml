@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/counter_block"
+    style="@style/VerticalList">
+
+    <LinearLayout
+        style="@style/HorizontalList_BG2"
+        android:background="@color/surface_1">
+
+        <LinearLayout
+            android:id="@+id/counter_header"
+            style="@style/HorizontalList"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/counter_indicator"
+                style="@style/Text"
+                android:layout_width="wrap_content" />
+
+            <View style="@style/SeparatorListHorizontal" />
+
+            <TextView
+                android:id="@+id/counter_name"
+                style="@style/Text"
+                android:layout_width="0dp"
+                android:layout_weight="1" />
+
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/counter_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="4sp">
+
+            <ImageView
+                style="@style/Icon24"
+                android:contentDescription="@string/altdescr_delete"
+                android:src="@drawable/px_times" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/counter_body"
+        style="@style/VerticalList">
+
+        <View style="@style/SeparatorListVertical" />
+
+        <com.rama.tui_zero.widgets.WdCheckbox
+            android:id="@+id/counter_enabled"
+            style="@style/Checkbox"
+            android:text="Active" />
+
+        <View style="@style/SeparatorListVertical" />
+
+        <LinearLayout style="@style/VerticalList_BG2">
+
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_counter_alias" />
+
+            <View style="@style/SeparatorListVertical" />
+
+            <EditText
+                android:id="@+id/counter_alias"
+                style="@style/EditText"
+                android:inputType="textNoSuggestions" />
+        </LinearLayout>
+
+        <View style="@style/SeparatorListVertical" />
+
+        <LinearLayout style="@style/VerticalList_BG2">
+
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_counter_from" />
+
+            <View style="@style/SeparatorListVertical" />
+
+            <EditText
+                android:id="@+id/counter_from"
+                style="@style/EditText"
+                android:inputType="numberSigned|numberDecimal" />
+        </LinearLayout>
+
+        <View style="@style/SeparatorListVertical" />
+
+        <LinearLayout style="@style/VerticalList_BG2">
+
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_counter_to" />
+
+            <View style="@style/SeparatorListVertical" />
+
+            <EditText
+                android:id="@+id/counter_to"
+                style="@style/EditText"
+                android:inputType="numberSigned|numberDecimal" />
+
+        </LinearLayout>
+
+        <View style="@style/SeparatorListVertical" />
+
+        <LinearLayout style="@style/VerticalList_BG2">
+
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_counter_delay" />
+
+            <View style="@style/SeparatorListVertical" />
+
+            <EditText
+                android:id="@+id/counter_delay"
+                style="@style/EditText"
+                android:inputType="number" />
+
+        </LinearLayout>
+
+        <View style="@style/SeparatorListVertical" />
+
+        <com.rama.tui_zero.widgets.WdCheckbox
+            android:id="@+id/counter_trail"
+            style="@style/Checkbox"
+            android:text="@string/label_counter_trail" />
+
+        <View style="@style/SeparatorListVertical" />
+
+        <TextView
+            style="@style/Text"
+            android:text="Iteration count" />
+
+        <View style="@style/SeparatorListVertical" />
+
+        <com.rama.tui_zero.widgets.WdCheckbox
+            android:id="@+id/counter_infinite"
+            style="@style/Checkbox"
+            android:text="@string/label_counter_infinite" />
+
+        <View style="@style/SeparatorListVertical" />
+
+        <TextView
+            style="@style/Text"
+            android:text="Direction" />
+
+        <View style="@style/SeparatorListVertical" />
+
+        <com.rama.tui_zero.widgets.WdRadioGroup
+            android:id="@+id/counter_mode"
+            style="@style/VerticalList_BG2"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    style="@style/VerticalList"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        style="@style/HorizontalList"
+        android:background="@color/crust">
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12sp">
+
+            <ImageView
+                style="@style/Icon24"
+                android:importantForAccessibility="no"
+                android:src="@drawable/px_search" />
+        </FrameLayout>
+
+        <EditText
+            android:id="@+id/filter_input"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@android:color/transparent"
+            android:imeOptions="actionSearch"
+            android:inputType="text"
+            android:maxLines="1"
+            android:padding="16sp"
+            android:singleLine="true"
+            android:textColor="@color/text"
+            android:textSize="16sp" />
+
+        <FrameLayout
+            android:id="@+id/clear_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="12sp"
+            android:visibility="gone">
+
+            <ImageView
+                style="@style/Icon24"
+                android:contentDescription="@string/altdescr_clear_search"
+                android:src="@drawable/px_times" />
+        </FrameLayout>
+    </LinearLayout>
+
+    <View style="@style/SeparatorListVertical" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/track_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/transparent"
+            android:cacheColorHint="@android:color/transparent"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="8dp"
+            android:drawSelectorOnTop="true"
+            android:fadingEdge="none"
+            android:overScrollMode="never"
+            android:scrollbars="none" />
+
+        <TextView
+            android:id="@+id/loading_text"
+            style="@style/H3"
+            android:layout_width="wrap_content"
+            android:layout_gravity="center"
+            android:text="@string/placeholder_loading_tracks"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>

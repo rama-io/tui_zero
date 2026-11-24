@@ -9,10 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * A playable file. Everything shown in the list comes from the file name:
- * "Artist1, Artist2 - Title - Country1, Country2 - Lang1, Lang2.ext"
- */
 public final class Track {
     public final File file;
     public final List<String> artists;
@@ -21,9 +17,7 @@ public final class Track {
     public final List<String> languages;
     public final String ext;
     public final String normalizedName;
-    /** Only set when the file has to be opened through MediaStore (Android 10). */
     public final Uri contentUri;
-    /** Milliseconds, or 0 when unknown. */
     public final long durationMs;
 
     public Track(File file, List<String> artists, String title, List<String> countries, List<String> languages, String ext, Uri contentUri, long durationMs) {
@@ -88,7 +82,6 @@ public final class Track {
         return String.format(Locale.US, "%d:%02d", totalSeconds / 60, totalSeconds % 60);
     }
 
-    /** Folder the file lives in, or "" when it has none. */
     public String folder() {
         String parent = file.getParent();
         return parent == null ? "" : parent;

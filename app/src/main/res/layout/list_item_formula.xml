@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/formula_block"
+    style="@style/VerticalList">
+
+    <LinearLayout
+        style="@style/HorizontalList_BG2"
+        android:background="@color/surface_1">
+
+        <LinearLayout
+            android:id="@+id/formula_header"
+            style="@style/HorizontalList"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:focusable="true">
+
+            <TextView
+                android:id="@+id/formula_indicator"
+                style="@style/Text"
+                android:layout_width="wrap_content" />
+
+            <View style="@style/SeparatorListHorizontal" />
+
+            <TextView
+                android:id="@+id/formula_name"
+                style="@style/Text"
+                android:layout_width="0dp"
+                android:layout_weight="1" />
+
+            <FrameLayout
+                android:id="@+id/formula_color"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="4sp">
+
+                <ImageView
+                    style="@style/Icon24"
+                    android:src="@drawable/px_circle" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/formula_delete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="4sp">
+
+            <ImageView
+                style="@style/Icon24"
+                android:contentDescription="@string/altdescr_delete"
+                android:src="@drawable/px_times" />
+        </FrameLayout>
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:id="@+id/formula_body"
+        style="@style/VerticalList">
+
+        <View style="@style/SeparatorListVertical" />
+
+        <com.rama.tui_zero.widgets.WdCheckbox
+            android:id="@+id/formula_enabled"
+            style="@style/Checkbox"
+            android:text="Active" />
+
+        <View style="@style/SeparatorListVertical" />
+
+        <LinearLayout style="@style/VerticalList_BG2">
+
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_formula_x" />
+
+            <View style="@style/SeparatorListVertical" />
+
+            <EditText
+                android:id="@+id/formula_x"
+                style="@style/EditText"
+                android:hint="@string/hint_formula_x"
+                android:inputType="textNoSuggestions" />
+        </LinearLayout>
+
+        <View style="@style/SeparatorListVertical" />
+
+        <LinearLayout style="@style/VerticalList_BG2">
+
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_formula_y" />
+
+            <View style="@style/SeparatorListVertical" />
+
+            <EditText
+                android:id="@+id/formula_y"
+                style="@style/EditText"
+                android:hint="@string/hint_formula_y"
+                android:inputType="textNoSuggestions" />
+
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

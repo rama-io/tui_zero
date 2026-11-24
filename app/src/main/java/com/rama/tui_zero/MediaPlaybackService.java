@@ -19,11 +19,6 @@ import com.rama.tui_zero.managers.MusicManager;
 import com.rama.tui_zero.managers.ThemeManager;
 import com.rama.tui_zero.objects.Track;
 
-/**
- * Always-on foreground service. As long as it is running the process has foreground priority, so
- * the system does not freeze or kill it when the screen locks. It starts with the app and only
- * ends through the notification's Stop action.
- */
 public class MediaPlaybackService extends Service {
     public static final String ACTION_PLAY_PAUSE = "com.rama.tui_zero.PLAY_PAUSE";
     public static final String ACTION_NEXT = "com.rama.tui_zero.NEXT";
@@ -57,9 +52,7 @@ public class MediaPlaybackService extends Service {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) app.startForegroundService(intent);
             else app.startService(intent);
-        } catch (RuntimeException ignored) {
-            // Background start restrictions: the next time the app is opened it starts for real.
-        }
+        } catch (RuntimeException ignored) {}
     }
 
     @Override
@@ -79,7 +72,6 @@ public class MediaPlaybackService extends Service {
         } else {
             registerReceiver(controlReceiver, controls);
         }
-        // System broadcast, must stay a plain registration.
         registerReceiver(noisyReceiver, new IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY));
 
         enterForeground();
@@ -87,7 +79,6 @@ public class MediaPlaybackService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        // startForegroundService() requires a startForeground() for every start call.
         enterForeground();
         if (intent != null && intent.getAction() != null) handleAction(intent.getAction());
         return START_STICKY;
@@ -147,9 +138,7 @@ public class MediaPlaybackService extends Service {
                 startForeground(NOTIFICATION_ID, notification);
             }
             foregroundStarted = true;
-        } catch (RuntimeException ignored) {
-            // E.g. not allowed to start from the background: stay a plain service.
-        }
+        } catch (RuntimeException ignored) {}
     }
 
     private void refreshNotification() {

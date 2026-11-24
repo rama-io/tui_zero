@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <FrameLayout
+        android:id="@+id/nav_playlist"
+        style="@style/NavBtn">
+
+        <ImageView
+            android:id="@+id/nav_playlist_icon"
+            style="@style/Icon24"
+            android:contentDescription="@string/altdescr_nav_playlist"
+            android:src="@drawable/px_playlist" />
+    </FrameLayout>
+
+    <View style="@style/SeparatorListHorizontalSmall" />
+
+    <FrameLayout
+        android:id="@+id/nav_visualizer"
+        style="@style/NavBtn">
+
+        <ImageView
+            android:id="@+id/nav_visualizer_icon"
+            style="@style/Icon24"
+            android:contentDescription="@string/altdescr_nav_visualizer"
+            android:src="@drawable/px_eye" />
+    </FrameLayout>
+
+    <View style="@style/SeparatorListHorizontalSmall" />
+
+    <FrameLayout
+        android:id="@+id/nav_settings"
+        style="@style/NavBtn">
+
+        <ImageView
+            android:id="@+id/nav_settings_icon"
+            style="@style/Icon24"
+            android:contentDescription="@string/header_settings"
+            android:src="@drawable/px_cog" />
+    </FrameLayout>
+</merge>

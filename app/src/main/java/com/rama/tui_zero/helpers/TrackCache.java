@@ -16,14 +16,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Plain-file replacement for the Room database: remembers the parsed name and probed duration of
- * every file so a rescan only has to look at files whose size or timestamp changed.
- */
 public final class TrackCache {
     private static final int MAGIC = 0x54554931;
     private static final int VERSION = 1;
-    // Unit separator symbol, will not show up in a file name.
     private static final String DELIM = "␟";
 
     public static final class Entry {
@@ -35,7 +30,6 @@ public final class TrackCache {
         public final String artists;
         public final String countries;
         public final String languages;
-        /** -1 when the file could not be decoded. */
         public final long durationMs;
 
         Entry(String path, long size, long lastModified, String ext, String title, String artists, String countries, String languages, long durationMs) {
@@ -86,7 +80,6 @@ public final class TrackCache {
                 result.put(e.path, e);
             }
         } catch (Exception e) {
-            // Corrupt or from another version: start over, the next scan rebuilds it.
             result.clear();
         }
         return result;

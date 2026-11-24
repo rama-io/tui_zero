@@ -64,7 +64,6 @@ public final class SystemBars {
         }
     }
 
-    /** Hides or shows the status and navigation bars (swipe from the edge brings them back briefly). */
     @SuppressWarnings("deprecation")
     public static void setVisible(Activity activity, boolean visible) {
         Window window = activity.getWindow();
