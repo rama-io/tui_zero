@@ -41,7 +41,8 @@
     <string name="label_counter_alias">Alias</string>
     <string name="label_counter_from">From</string>
     <string name="label_counter_to">To</string>
-    <string name="label_visualizer_delay">Delay between steps (ms)</string>
+    <string name="label_counter_trail">Keep what it drew (off: only the current value)</string>
+    <string name="label_counter_delay">Delay between steps (ms, empty for none)</string>
     <string name="label_counter_infinite">Infinite (loop forever)</string>
     <string name="label_counter_alternate">Alternate</string>
     <string name="label_counter_linear">Linear</string>

@@ -222,23 +222,6 @@
 
                 <View style="@style/SeparatorListVertical" />
 
-                <LinearLayout style="@style/VerticalList_BG2">
-
-                    <TextView
-                        style="@style/Text"
-                        android:text="@string/label_visualizer_delay" />
-
-                    <View style="@style/SeparatorListVertical" />
-
-                    <EditText
-                        android:id="@+id/visualizer_delay"
-                        style="@style/EditText"
-                        android:inputType="number" />
-
-                </LinearLayout>
-
-                <View style="@style/SeparatorListVertical" />
-
                 <LinearLayout
                     android:id="@+id/counters_container"
                     style="@style/VerticalListDivided" />

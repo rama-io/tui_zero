@@ -136,10 +136,10 @@ public class WdPlot extends View {
         drawGrid(canvas, w, h, scale, centerX, centerY, halfW, halfH, step);
 
         long elapsed = SystemClock.uptimeMillis() - startedAt;
-        int visible = animation == null ? Integer.MAX_VALUE : animation.visiblePoints(elapsed);
+        int[] ranges = animation == null ? null : animation.ranges(elapsed);
         for (Visualizer.Series s : series) {
             int color = palette != null ? Themes.lineColor(palette, s.color, s.formulaIndex) : 0xFFCBA6F7;
-            drawSeries(canvas, s, visible, color, w, h, scale, centerX, centerY);
+            drawSeries(canvas, s, ranges, color, w, h, scale, centerX, centerY);
         }
         if (animation != null && animation.isRunning(elapsed)) postInvalidateOnAnimation();
     }
@@ -172,34 +172,39 @@ public class WdPlot extends View {
         if (originY >= 0 && originY <= h) canvas.drawLine(0, originY, w, originY, axisPaint);
     }
 
-    /** Draws the first `visible` points joined by a line, with a larger marker on the newest one. */
-    private void drawSeries(Canvas canvas, Visualizer.Series s, int visible, int color, int w, int h, double scale, double cx, double cy) {
+    /** Draws the given stretches of points (pairs from, to excluded; null: all) as lines, the newest point marked. */
+    private void drawSeries(Canvas canvas, Visualizer.Series s, int[] ranges, int color, int w, int h, double scale, double cx, double cy) {
         curvePaint.setColor(color);
         dotPaint.setColor(color);
         path.reset();
-        boolean penDown = false;
-        int count = Math.min(visible, s.xs.length);
-        boolean dots = count <= MAX_DOTS;
+        if (ranges == null) ranges = new int[]{0, s.xs.length};
+        int shown = 0;
+        for (int r = 0; r < ranges.length; r += 2) shown += Math.max(0, Math.min(ranges[r + 1], s.xs.length) - ranges[r]);
+        boolean dots = shown <= MAX_DOTS;
         float half = 2 * density;
         float headX = 0, headY = 0;
         boolean hasHead = false;
-        for (int i = 0; i < count; i++) {
-            if (!isFinite(s.xs[i]) || !isFinite(s.ys[i])) {
-                penDown = false; // a gap: the formula had no value here
-                continue;
+        for (int r = 0; r < ranges.length; r += 2) {
+            boolean penDown = false; // every stretch starts a new line
+            int end = Math.min(ranges[r + 1], s.xs.length);
+            for (int i = ranges[r]; i < end; i++) {
+                if (!isFinite(s.xs[i]) || !isFinite(s.ys[i])) {
+                    penDown = false; // a gap: the formula had no value here
+                    continue;
+                }
+                float px = (float) (w / 2.0 + (s.xs[i] - cx) * scale);
+                float py = (float) (h / 2.0 - (s.ys[i] - cy) * scale);
+                if (penDown) path.lineTo(px, py);
+                else path.moveTo(px, py);
+                penDown = true;
+                if (dots) canvas.drawRect(px - half, py - half, px + half, py + half, dotPaint);
+                headX = px;
+                headY = py;
+                hasHead = true;
             }
-            float px = (float) (w / 2.0 + (s.xs[i] - cx) * scale);
-            float py = (float) (h / 2.0 - (s.ys[i] - cy) * scale);
-            if (penDown) path.lineTo(px, py);
-            else path.moveTo(px, py);
-            penDown = true;
-            if (dots) canvas.drawRect(px - half, py - half, px + half, py + half, dotPaint);
-            headX = px;
-            headY = py;
-            hasHead = true;
         }
         canvas.drawPath(path, curvePaint);
-        if (hasHead && count > 1) {
+        if (hasHead && shown > 1) {
             float big = half * 2.2f;
             canvas.drawRect(headX - big, headY - big, headX + big, headY + big, dotPaint);
         }

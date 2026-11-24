@@ -27,8 +27,7 @@ public final class VisualizerStore {
         Visualizer v = new Visualizer();
         try {
             JSONObject json = new JSONObject(raw);
-            // Before the delay was shared, every counter had its own: take the first one that was set.
-            String oldDelay = "";
+            String sharedDelay = json.optString("delay"); // saved by the version where one delay was shared
             JSONArray counters = json.optJSONArray("counters");
             for (int i = 0; counters != null && i < counters.length(); i++) {
                 JSONObject c = counters.getJSONObject(i);
@@ -37,10 +36,10 @@ public final class VisualizerStore {
                 counter.alternate = c.optBoolean("alternate", false);
                 counter.enabled = c.optBoolean("enabled", true);
                 counter.collapsed = c.optBoolean("collapsed", false);
+                counter.keepTrail = c.optBoolean("keepTrail", true);
                 v.counters.add(counter);
-                if (oldDelay.isEmpty()) oldDelay = c.optString("delay");
+                counter.delay = c.has("delay") ? c.optString("delay") : sharedDelay;
             }
-            v.delay = json.has("delay") ? json.optString("delay") : oldDelay;
             JSONArray formulas = json.optJSONArray("formulas");
             for (int i = 0; formulas != null && i < formulas.length(); i++) {
                 JSONObject f = formulas.getJSONObject(i);
@@ -61,7 +60,7 @@ public final class VisualizerStore {
             for (Visualizer.Counter c : v.counters) {
                 counters.put(new JSONObject().put("alias", c.alias).put("from", c.from).put("to", c.to)
                         .put("infinite", c.infinite).put("alternate", c.alternate)
-                        .put("enabled", c.enabled).put("collapsed", c.collapsed));
+                        .put("delay", c.delay).put("keepTrail", c.keepTrail).put("enabled", c.enabled).put("collapsed", c.collapsed));
             }
             JSONArray formulas = new JSONArray();
             for (Visualizer.FormulaDef f : v.formulas) {
@@ -69,7 +68,7 @@ public final class VisualizerStore {
                         .put("enabled", f.enabled).put("collapsed", f.collapsed));
             }
             PrefsManager.getInstance(context).setVisualizerJson(new JSONObject()
-                    .put("delay", v.delay).put("counters", counters).put("formulas", formulas).toString());
+                    .put("counters", counters).put("formulas", formulas).toString());
         } catch (JSONException ignored) {
             // keys are constants and values are strings, so this cannot happen
         }

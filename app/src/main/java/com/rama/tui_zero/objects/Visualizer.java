@@ -10,17 +10,17 @@ import java.util.Random;
  * What the visualizer draws: counters (a name that counts from one number to another) and formulas that give the
  * X and Y of a point in terms of those counters, e.g. counter t from 1 to 100, x = cos($t), y = sin($t).
  *
- * All counters share one clock (the delay): on every tick each of them takes one step, and every formula gives one
- * new point. The line is the trail of those points. When a pass is over and some counter is infinite, the line is
- * erased and the next pass starts, so nothing is ever drawn on top of an older drawing.
+ * Every counter has its own delay, so it runs on its own clock. What is on screen is every combination of counter
+ * values where each counter is: without a delay, at all of its values at once; with a delay and "keep trail", at the
+ * values it has gone through so far (so a line grows, and with alternate shrinks on the way back); with a delay and no
+ * trail, only at its current value (so a shape moves instead of piling up). Example: a circle t = 1..360 without delay and
+ * a radius r = 0..10 with a delay and no trail is a circle that grows.
  *
  * The fields keep the text as typed, so editing never reformats what the person is in the middle of writing.
  * Plain Java, no Android classes.
  */
 public final class Visualizer {
     public static final int MAX_POINTS = 50000;
-    /** How long a finished drawing stays before it is erased and the next pass begins. */
-    public static final long HOLD_MS = 600;
 
     public static final class Counter {
         public String alias;
@@ -34,11 +34,23 @@ public final class Visualizer {
         public boolean enabled = true;
         /** Only whether its block is folded into its title in Settings. */
         public boolean collapsed;
+        /**
+         * For a counter with a delay: true keeps what it already went through on screen (the line grows, and with
+         * alternate shrinks on the way back); false shows only its current value, so the shape moves instead of piling up.
+         */
+        public boolean keepTrail = true;
+        /** Milliseconds between two steps of this counter. Empty or 0: no animation, it shows its last value. */
+        public String delay = "";
 
         public Counter(String alias, String from, String to) {
             this.alias = alias;
             this.from = from;
             this.to = to;
+        }
+
+        public Counter(String alias, String from, String to, String delay) {
+            this(alias, from, to);
+            this.delay = delay;
         }
     }
 
@@ -77,70 +89,109 @@ public final class Visualizer {
         }
     }
 
-    /**
-     * The timeline of a pass, worked out from the elapsed time alone so there is no state to keep in sync.
-     * A pass lasts as long as its longest counter: finite and linear counters take n steps (n values), an alternating
-     * one takes 2 * (n - 1) (1 up to 100 and back down to 2, then the pass ends and 1 comes again). A finite counter
-     * that finishes early waits at its last value.
-     */
+    /** What is on screen at a given time, worked out from the elapsed time alone so there is no state to keep in sync. */
     public static final class Animation {
         final int[] counts;
+        final long[] delays;
         final boolean[] infinite;
         final boolean[] alternate;
-        final long delayMs;
-        public final int passLength;
-        /** True when some counter is infinite, so passes follow each other forever. */
-        public final boolean looping;
+        final boolean[] trail;
+        final long[] strides;
+        public final int totalPoints;
 
-        Animation(int[] counts, boolean[] infinite, boolean[] alternate, long delayMs) {
+        Animation(int[] counts, long[] delays, boolean[] infinite, boolean[] alternate, boolean[] trail) {
             this.counts = counts;
+            this.delays = delays;
             this.infinite = infinite;
             this.alternate = alternate;
-            this.delayMs = delayMs;
-            int length = 1;
-            boolean loops = false;
-            for (int i = 0; i < counts.length; i++) {
-                length = Math.max(length, passLengthOf(i));
-                if (infinite[i] && counts[i] > 1) loops = true;
+            this.trail = trail;
+            strides = new long[counts.length];
+            long stride = 1;
+            for (int i = counts.length - 1; i >= 0; i--) {
+                strides[i] = stride;
+                stride *= counts[i];
             }
-            this.passLength = length;
-            this.looping = loops;
+            totalPoints = (int) stride;
         }
 
-        private int passLengthOf(int i) {
-            int n = counts[i];
-            if (infinite[i] && alternate[i] && n > 1) return 2 * (n - 1);
-            return n;
+        private boolean animated(int i) {
+            return counts[i] > 1 && delays[i] > 0;
         }
 
-        /** Index of the value counter i shows at step m of a pass. */
-        int indexOf(int i, long m) {
+        /** Index of the value counter i is showing after elapsedMs (its last one when it has no delay). */
+        int indexOf(int i, long elapsedMs) {
             int n = counts[i];
-            if (n <= 1) return 0;
-            if (!infinite[i]) return (int) Math.min(m, n - 1);
-            if (!alternate[i]) return (int) (m % n);
+            if (n <= 1 || delays[i] <= 0) return n - 1 < 0 ? 0 : n - 1;
+            long steps = elapsedMs / delays[i];
+            if (!infinite[i]) return (int) Math.min(steps, n - 1);
+            if (!alternate[i]) return (int) (steps % n);
             long period = 2L * (n - 1);
-            long r = m % period;
+            long r = steps % period;
             return (int) (r < n ? r : period - r);
         }
 
-        private long holdSteps() {
-            return (HOLD_MS + delayMs - 1) / delayMs;
+        /** First and last value index counter i has on screen. */
+        private int low(int i, long elapsedMs) {
+            if (!animated(i) || trail[i]) return 0;
+            return indexOf(i, elapsedMs);
         }
 
-        /** How many points of the pass, counted from the first one, are drawn after elapsedMs. */
+        private int high(int i, long elapsedMs) {
+            if (!animated(i)) return counts[i] - 1;
+            return indexOf(i, elapsedMs);
+        }
+
+        /**
+         * The points on screen after elapsedMs, as pairs {from, to} (to excluded) of positions in a series. Each pair is
+         * one stretch of line; the gaps between pairs are not joined.
+         */
+        public int[] ranges(long elapsedMs) {
+            int n = counts.length;
+            int[] lo = new int[n];
+            int[] hi = new int[n];
+            int k = -1; // the last counter that is not showing all of its values
+            for (int i = 0; i < n; i++) {
+                lo[i] = low(i, elapsedMs);
+                hi[i] = high(i, elapsedMs);
+                if (lo[i] != 0 || hi[i] != counts[i] - 1) k = i;
+            }
+            if (k < 0) return new int[]{0, totalPoints};
+            // The counters before k pick a stretch each; counter k's values and everything after it are one stretch.
+            int[] at = new int[k];
+            long blocks = 1;
+            for (int i = 0; i < k; i++) {
+                at[i] = lo[i];
+                blocks *= hi[i] - lo[i] + 1;
+            }
+            int[] out = new int[(int) blocks * 2];
+            for (int b = 0; b < blocks; b++) {
+                long base = 0;
+                for (int i = 0; i < k; i++) base += at[i] * strides[i];
+                out[2 * b] = (int) (base + lo[k] * strides[k]);
+                out[2 * b + 1] = (int) (base + (hi[k] + 1) * strides[k]);
+                for (int i = k - 1; i >= 0; i--) { // odometer over the counters before k
+                    if (++at[i] <= hi[i]) break;
+                    at[i] = lo[i];
+                }
+            }
+            return out;
+        }
+
+        /** How many points are on screen after elapsedMs. */
         public int visiblePoints(long elapsedMs) {
-            if (delayMs <= 0) return passLength; // no delay: no animation, the whole drawing
-            long steps = elapsedMs / delayMs;
-            if (!looping) return (int) Math.min(steps, passLength - 1) + 1;
-            long inCycle = steps % (passLength + holdSteps());
-            return (int) (inCycle < passLength ? inCycle + 1 : passLength);
+            int[] r = ranges(elapsedMs);
+            int total = 0;
+            for (int i = 0; i < r.length; i += 2) total += r[i + 1] - r[i];
+            return total;
         }
 
         /** False once nothing will change any more, so the screen can stop redrawing. */
         public boolean isRunning(long elapsedMs) {
-            if (delayMs <= 0 || passLength <= 1) return false;
-            return looping || elapsedMs / delayMs < passLength - 1;
+            for (int i = 0; i < counts.length; i++) {
+                if (!animated(i)) continue;
+                if (infinite[i] || elapsedMs / delays[i] < counts[i] - 1) return true;
+            }
+            return false;
         }
     }
 
@@ -154,15 +205,13 @@ public final class Visualizer {
 
     public final List<Counter> counters = new ArrayList<Counter>();
     public final List<FormulaDef> formulas = new ArrayList<FormulaDef>();
-    /** Milliseconds between two steps, for all counters. Empty or 0: no animation. */
-    public String delay = "";
 
     /** What a fresh install starts with, so the canvas is not empty. */
     public static Visualizer example() {
         Visualizer v = new Visualizer();
-        v.delay = "10";
-        v.counters.add(new Counter("t", "1", "100"));
-        v.formulas.add(new FormulaDef("cos($t)", "sin($t)"));
+        // 360 values: 0 would repeat the point of 360
+        v.counters.add(new Counter("t", "1", "360", "10"));
+        v.formulas.add(new FormulaDef("sin($t*pi/180)", "cos($t*pi/180)"));
         return v;
     }
 
@@ -206,9 +255,9 @@ public final class Visualizer {
     }
 
     /**
-     * Works out one pass: the point every turned-on formula gives at every step. A counter steps by 1 from "from"
-     * towards "to", both included, so 1 to 100 has 100 values. Turned off counters and formulas are skipped; a
-     * formula that uses a turned off counter says so. Stops at the first problem and describes it in Result.error.
+     * Evaluates every turned-on formula for every combination of values of the turned-on counters (the first counter is
+     * the outer loop). A counter steps by 1 from "from" towards "to", both included, so 1 to 100 gives 100 values.
+     * A formula that uses a turned off counter says so. Stops at the first problem and describes it in Result.error.
      */
     public Result build() {
         Result result = new Result();
@@ -223,8 +272,11 @@ public final class Visualizer {
         String[] names = new String[n];
         double[][] values = new double[n][];
         int[] counts = new int[n];
+        long[] delays = new long[n];
         boolean[] infinite = new boolean[n];
         boolean[] alternate = new boolean[n];
+        boolean[] trail = new boolean[n];
+        long combos = 1;
         for (int i = 0; i < n; i++) {
             Counter c = active.get(i);
             String label = "COUNTER_" + (counters.indexOf(c) + 1);
@@ -249,7 +301,8 @@ public final class Visualizer {
                 return result;
             }
             long count = (long) Math.floor(Math.abs(to - from) + 1e-9) + 1;
-            if (count > MAX_POINTS) {
+            combos *= count;
+            if (combos > MAX_POINTS) {
                 result.error = "too many points (max " + MAX_POINTS + ")";
                 return result;
             }
@@ -257,17 +310,31 @@ public final class Visualizer {
             values[i] = new double[(int) count];
             for (int k = 0; k < count; k++) values[i][k] = from + step * k;
             counts[i] = (int) count;
+            delays[i] = parseDelay(c.delay);
             infinite[i] = c.infinite;
             alternate[i] = c.alternate;
+            trail[i] = c.keepTrail;
         }
-        Animation animation = new Animation(counts, infinite, alternate, parseDelay(delay));
-        if (animation.passLength > MAX_POINTS) {
-            result.error = "too many points (max " + MAX_POINTS + ")";
-            return result;
+        // Counters that show only their current value go outermost, so what is left of the combination (the counters
+        // that draw) stays together as one line whatever order the counters are listed in.
+        int[] perm = new int[n];
+        int at = 0;
+        for (int i = 0; i < n; i++) if (counts[i] > 1 && delays[i] > 0 && !trail[i]) perm[at++] = i;
+        for (int i = 0; i < n; i++) if (!(counts[i] > 1 && delays[i] > 0 && !trail[i])) perm[at++] = i;
+        int[] pc = new int[n];
+        long[] pd = new long[n];
+        boolean[] pi = new boolean[n];
+        boolean[] pa = new boolean[n];
+        boolean[] pt = new boolean[n];
+        for (int j = 0; j < n; j++) {
+            pc[j] = counts[perm[j]];
+            pd[j] = delays[perm[j]];
+            pi[j] = infinite[perm[j]];
+            pa[j] = alternate[perm[j]];
+            pt[j] = trail[perm[j]];
         }
-        result.animation = animation;
+        result.animation = new Animation(pc, pd, pi, pa, pt);
 
-        int length = animation.passLength;
         for (int f = 0; f < formulas.size(); f++) {
             FormulaDef def = formulas.get(f);
             if (!def.enabled) continue;
@@ -286,16 +353,21 @@ public final class Visualizer {
                 result.error = label + " Y: " + explain(e.getMessage(), off);
                 return result;
             }
-            double[] xs = new double[length];
-            double[] ys = new double[length];
+            double[] xs = new double[(int) combos];
+            double[] ys = new double[(int) combos];
+            int[] index = new int[n];
             double[] vars = new double[n];
-            for (int m = 0; m < length; m++) {
-                for (int i = 0; i < n; i++) vars[i] = values[i][animation.indexOf(i, m)];
-                xs[m] = fx.eval(vars);
-                ys[m] = fy.eval(vars);
+            for (int p = 0; p < combos; p++) {
+                for (int j = 0; j < n; j++) vars[perm[j]] = values[perm[j]][index[j]];
+                xs[p] = fx.eval(vars);
+                ys[p] = fy.eval(vars);
+                for (int j = n - 1; j >= 0; j--) { // odometer: the last counter moves fastest
+                    if (++index[j] < counts[perm[j]]) break;
+                    index[j] = 0;
+                }
             }
             result.series.add(new Series(xs, ys, def.color == null ? "" : def.color, f));
-            result.points += length;
+            result.points += xs.length;
         }
         return result;
     }

@@ -392,13 +392,8 @@ public class SettingsPage implements Page {
         countersContainer = root.findViewById(R.id.counters_container);
         formulasContainer = root.findViewById(R.id.formulas_container);
 
-        // One delay for every counter, outside of them: they all step on the same clock.
-        EditText delay = root.findViewById(R.id.visualizer_delay);
-        delay.setText(visualizer.delay);
-        delay.addTextChangedListener(watcher(text -> visualizer.delay = text));
-
         root.findViewById(R.id.add_counter).setOnClickListener(v -> {
-            visualizer.counters.add(new Visualizer.Counter(visualizer.nextAlias(), "1", "10"));
+            visualizer.counters.add(new Visualizer.Counter(visualizer.nextAlias(), "1", "10", "10"));
             renderVisualizerFields();
             onVisualizerChanged();
         });
@@ -422,6 +417,7 @@ public class SettingsPage implements Page {
             bind(block, R.id.counter_alias, counter.alias, text -> counter.alias = text);
             bind(block, R.id.counter_from, counter.from, text -> counter.from = text);
             bind(block, R.id.counter_to, counter.to, text -> counter.to = text);
+            bind(block, R.id.counter_delay, counter.delay, text -> counter.delay = text);
             bindCounterOptions(block, counter);
             bindChrome(block, R.id.counter_enabled, R.id.counter_header, R.id.counter_indicator, R.id.counter_body,
                     R.id.counter_delete, counter.enabled, counter.collapsed, new ItemState() {
@@ -518,6 +514,13 @@ public class SettingsPage implements Page {
 
     /** Infinite loops the counter; the two radios (how it loops) only matter, and only show, when it is on. */
     private void bindCounterOptions(View block, final Visualizer.Counter counter) {
+        WdCheckbox trail = block.findViewById(R.id.counter_trail);
+        trail.setChecked(counter.keepTrail);
+        trail.setOnCheckedChangeListener(checked -> {
+            counter.keepTrail = checked;
+            onVisualizerChanged();
+        });
+
         WdCheckbox infinite = block.findViewById(R.id.counter_infinite);
         final WdRadioGroup mode = block.findViewById(R.id.counter_mode);
 

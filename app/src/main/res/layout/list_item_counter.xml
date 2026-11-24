@@ -105,6 +105,30 @@
 
         <View style="@style/SeparatorListVertical" />
 
+        <LinearLayout style="@style/VerticalList_BG2">
+
+            <TextView
+                style="@style/Text"
+                android:text="@string/label_counter_delay" />
+
+            <View style="@style/SeparatorListVertical" />
+
+            <EditText
+                android:id="@+id/counter_delay"
+                style="@style/EditText"
+                android:inputType="number" />
+
+        </LinearLayout>
+
+        <View style="@style/SeparatorListVertical" />
+
+        <com.rama.tui_zero.widgets.WdCheckbox
+            android:id="@+id/counter_trail"
+            style="@style/Checkbox"
+            android:text="@string/label_counter_trail" />
+
+        <View style="@style/SeparatorListVertical" />
+
         <TextView
             style="@style/Text"
             android:text="Iteration count" />
